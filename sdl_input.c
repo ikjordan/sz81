@@ -20,8 +20,10 @@
 #include "zx81.h"
 
 /* Variables */
+#ifdef USE_JOYSTICK
 SDL_Joystick *joystick;
 int joystick_dead_zone;
+#endif
 int show_input_id;
 int current_input_id;
 int runopts_emulator_speed;
@@ -36,14 +38,18 @@ int runopts_sound_ay_unreal;
 
 ctrlremap_ ctrl_remaps[MAX_CTRL_REMAPS];
 ctrl_remapper_ ctrl_remapper;
+#ifdef USE_JOYSTICK
 joy_cfg_ joy_cfg;
+#endif
 
 extern ZX81 zx81;
 
 /* Defines */
 #define MAX_KEYSYMS (138 + 6)
 
+#ifdef USE_JOYSTICK
 #define JOYDEADZONE (32767 * joystick_dead_zone / 100)
+#endif
 
 /* Extended SDL state definitions */
 #define SDL_DRAGGED 2
@@ -98,7 +104,9 @@ SDL_Event event, virtualevent;
 int last_vkeyb_state;
 
 /* This is used by the joystick configurator to store control ids */
+#ifdef USE_JOYSTICK
 int runopts_joy_cfg_id[12];
+#endif
 
 char *keysyms[] = {
 	"SDLK_UNKNOWN", "SDLK_FIRST", "SDLK_BACKSPACE", "SDLK_TAB", "SDLK_CLEAR", 
@@ -197,6 +205,7 @@ void sdl_keyboard_init(void) {
 		ctrl_remaps[count].remap_mod_id = UNDEFINED;
 	}
 
+#ifdef USE_JOYSTICK
 	/* Open joystick 0 if available */
 	SDL_JoystickEventState(SDL_ENABLE);			
 	joystick = SDL_JoystickOpen(0);
@@ -210,7 +219,7 @@ void sdl_keyboard_init(void) {
 				SDL_JoystickNumButtons(joystick));
 		#endif
 	}
-
+#endif
 	/* Set some default controls for platform */
 	index = -1;
 	/* Keyboard to keyboard */
@@ -325,6 +334,7 @@ void sdl_keyboard_init(void) {
 	ctrl_remaps[index].remap_device = DEVICE_CURSOR;
 	ctrl_remaps[index].remap_id = CURSOR_S;
 
+#ifdef USE_JOYSTICK
 	/* Joystick to some other device.
 	 * Platform specific joysticks can be hardcoded with some defaults
 	 * here but otherwise their configurations should be entirely read
@@ -766,6 +776,7 @@ void sdl_keyboard_init(void) {
 			#endif
 		#endif
 	}
+#endif
 	#ifdef SDL_DEBUG_EVENTS
 		printf("%s: ctrl_remaps index=%i\n", __func__, index);
 	#endif
@@ -799,12 +810,17 @@ void sdl_keyboard_init(void) {
 
 int keyboard_update(void) {
 	static int skip_update = TRUE, skip_drag = TRUE, last_hs_pressed[2];
-	static int axisstates[MAX_JOY_AXES * 2], init = TRUE;
+#ifdef USE_JOYSTICK
+	static int axisstates[MAX_JOY_AXES * 2];
+#endif
+	static int init = TRUE;
 	int eventfound = FALSE, count, found;
+#ifdef USE_JOYSTICK
 	struct Notification notification;
 	int hs_vkeyb_ctb_selected;
 	int hs_runopts_selected;
 	int axis_end = 0;
+#endif
 	SDLMod modstate;
 	#ifdef SDL_DEBUG_TIMING
 		static Uint32 lasttime = 0;
@@ -822,8 +838,10 @@ int keyboard_update(void) {
 	if (init) {
 		init = FALSE;
 		last_hs_pressed[0] = last_hs_pressed[1] = UNDEFINED;
+#ifdef USE_JOYSTICK
 		for (count = 0; count < MAX_JOY_AXES; count++)
 			axisstates[count * 2] = axisstates[count * 2 + 1] = SDL_RELEASED;
+#endif
 		/* Flush events (may have been done earlier too when opening a joystick */
 		while (SDL_PollEvent (&event));
 		event.type = SDL_NOEVENT;	/* Important */
@@ -954,6 +972,7 @@ int keyboard_update(void) {
 						}
 					}
 					break;
+#ifdef USE_JOYSTICK
 				case SDL_JOYBUTTONUP:
 				case SDL_JOYBUTTONDOWN:
 					device = DEVICE_JOYSTICK;
@@ -1035,6 +1054,7 @@ int keyboard_update(void) {
 						}
 					}
 					break;
+#endif
 				case SDL_QUIT:
 					printf("SDL_QUIT\n");
 					/* Simulate an F10 press which will execute the exit code */
@@ -1169,6 +1189,7 @@ int keyboard_update(void) {
 				if (eventfound) break;
 				
 			} else if (ctrl_remapper.state) {
+#ifdef USE_JOYSTICK
 				/* A new joystick control is currently being remapped */
 				if (device != UNDEFINED) {
 					if (state == SDL_PRESSED) {
@@ -1224,6 +1245,7 @@ int keyboard_update(void) {
 							notification_show(NOTIFICATION_SHOW, &notification);
 						} else if (runtime_options[3].state) {
 							/* Locate currently selected hotspot for group RUNOPTS3 */
+#ifdef USE_JOYSTICK
 							hs_runopts_selected = get_selected_hotspot(HS_GRP_RUNOPTS3);
 							if (device == DEVICE_JOYSTICK) {
 								/* Store id for later use within runopts-transit when saving */
@@ -1236,9 +1258,11 @@ int keyboard_update(void) {
 								/* Update the joycfg text */
 								set_joy_cfg_text(JOY_CFG_TEXT_CANCELLED);
 							}
+#endif
 						}
 					}
 				}
+#endif
 			}
 		}
 	}
@@ -1303,6 +1327,7 @@ void manage_cursor_input(void) {
 				 * Cursor remap           *
 				 * ************************/
 				/* Initiate joystick control remapping if a joystick is present */
+#ifdef USE_JOYSTICK
 				if (joystick) {
 					if (vkeyb.state) {
 						ctrl_remapper.state = TRUE;
@@ -1316,6 +1341,7 @@ void manage_cursor_input(void) {
 						}
 					}
 				}
+#endif
 			} else if (id == CURSOR_N) {
 				/**************************
 				 * Move the selector up   *
@@ -1680,6 +1706,7 @@ void manage_cursor_input(void) {
 					} else { 
 						hotspots[hs_currently_selected - 1].flags |= HS_PROP_SELECTED;
 					}
+#ifdef USE_JOYSTICK
 				} else if (get_active_component() == COMP_RUNOPTS3) {
 					key_repeat_manager(KRM_FUNC_REPEAT, &event, COMP_RUNOPTS3 * CURSOR_W);
 					hotspots[hs_currently_selected].flags &= ~HS_PROP_SELECTED;
@@ -1710,6 +1737,7 @@ void manage_cursor_input(void) {
 					} else {
 						hotspots[hs_currently_selected - 1].flags |= HS_PROP_SELECTED;
 					}
+#endif
 				}
 			} else if (id == CURSOR_E) {
 				/**************************
@@ -1810,6 +1838,7 @@ void manage_cursor_input(void) {
 					} else {
 						hotspots[hs_currently_selected + 1].flags |= HS_PROP_SELECTED;
 					}
+#ifdef USE_JOYSTICK
 				} else if (get_active_component() == COMP_RUNOPTS3) {
 					key_repeat_manager(KRM_FUNC_REPEAT, &event, COMP_RUNOPTS3 * CURSOR_E);
 					hotspots[hs_currently_selected].flags &= ~HS_PROP_SELECTED;
@@ -1840,11 +1869,14 @@ void manage_cursor_input(void) {
 					} else {
 						hotspots[hs_currently_selected + 1].flags |= HS_PROP_SELECTED;
 					}
+#endif
 				}
 			}
 			/* Update the joycfg text if the cursor was moved there */
+#ifdef USE_JOYSTICK
 			if (id == CURSOR_N || id == CURSOR_S || id == CURSOR_W || id == CURSOR_E)
 				set_joy_cfg_text(JOY_CFG_TEXT_DEFAULT_SETTINGS);
+#endif
 		} else if (state == SDL_RELEASED) {
 			if (id == CURSOR_HIT) {
 				/* Release a previous press (it's not important where) */
@@ -2125,7 +2157,9 @@ void toggle_vkeyb_state(void) {
  * of the runtime options pages is currently active */
 
 void manage_runopts_input(void) {
+#ifdef USE_JOYSTICK
 	int hs_currently_selected;
+#endif
 	int amount, index;
 	
 	/* Note that I'm currently ignoring modifier states */
@@ -2178,6 +2212,7 @@ void manage_runopts_input(void) {
 					key_repeat_manager(KRM_FUNC_RELEASE, NULL, 0);
 				}
 			} else if (runtime_options[3].state) {
+#ifdef USE_JOYSTICK
 				/* Joy Dead Zone < and > */
 				if (state == SDL_PRESSED) {
 					key_repeat_manager(KRM_FUNC_REPEAT, &event, COMP_RUNOPTS3 * id);
@@ -2189,6 +2224,7 @@ void manage_runopts_input(void) {
 				} else if (state == SDL_RELEASED) {
 					key_repeat_manager(KRM_FUNC_RELEASE, NULL, 0);
 				}
+#endif
 			}
 		} else if (id == SDLK_INSERT || id == SDLK_DELETE) {
 			if (runtime_options[0].state) {
@@ -2396,6 +2432,7 @@ void manage_runopts_input(void) {
 				}
 			}
 		} else if (id >= SDLK_a && id <= SDLK_l) {
+#ifdef USE_JOYSTICK
 			if (runtime_options[3].state && joystick) {
 				if (state == SDL_PRESSED) {
 					/* Because the control remapper is being activated with hit,
@@ -2411,6 +2448,7 @@ void manage_runopts_input(void) {
 					manage_cursor_input();
 				}
 			}
+#endif
 		}
 	}
 }
@@ -2883,10 +2921,14 @@ void runopts_transit(int state) {
 	static struct keyrepeat runopts_key_repeat;
 	static Uint32 runopts_colours_emu_fg;
 	static Uint32 runopts_colours_emu_bg;
+#ifdef USE_JOYSTICK
 	static int runopts_joystick_dead_zone;
+#endif
 	static int runopts_emulator_frameskip;
+#ifdef USE_JOYSTICK
 	int protected, remap_device, remap_id, remap_mod_id;
 	int count, index, ctrl, found, components;
+#endif
 	struct Notification notification;
 
 	if (state == TRANSIT_OUT) {
@@ -2897,9 +2939,13 @@ void runopts_transit(int state) {
 			sdl_key_repeat.interval = runopts_key_repeat.interval;
 			colours.emu_fg = runopts_colours_emu_fg;
 			colours.emu_bg = runopts_colours_emu_bg;
+#ifdef USE_JOYSTICK
 			joystick_dead_zone = runopts_joystick_dead_zone;
+#endif
 		}
+#ifdef USE_JOYSTICK
 		joy_cfg.state = FALSE;	/* Discard what was remapped and not saved */
+#endif
 	} else if (state == TRANSIT_IN) {
 		/* Initialise copies of the variables modifiable within runopts.
 		 * Sound volume isn't included because it's always available for 
@@ -2918,8 +2964,10 @@ void runopts_transit(int state) {
 		runopts_key_repeat.interval = sdl_key_repeat.interval;
 		runopts_colours_emu_fg = colours.emu_fg;
 		runopts_colours_emu_bg = colours.emu_bg;
+#ifdef USE_JOYSTICK
 		runopts_joystick_dead_zone = joystick_dead_zone;
 		for (count = 0; count < 12; count++) runopts_joy_cfg_id[count] = UNDEFINED;
+#endif
 	} else if (state == TRANSIT_SAVE) {
 		strcpy(notification.title, "Options");
 		strcpy(notification.text, "Changes saved");
@@ -2985,6 +3033,7 @@ void runopts_transit(int state) {
 				sdl_sound.ay_unreal = runopts_sound_ay_unreal;
 			}
 		#endif
+#ifdef USE_JOYSTICK
 		/* If the joycfg was used then update/insert the controls that
 		 * were remapped. Note that this needs to be kept in sync with
 		 * any joystick controls hard-coded within keyboard_update */
@@ -3219,6 +3268,7 @@ void runopts_transit(int state) {
 				}
 			}
 		}
+#endif
 	}
 
 	last_state = state;

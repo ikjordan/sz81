@@ -1098,9 +1098,12 @@ void hotspots_render(void) {
 				(hotspots[count].gid == HS_GRP_DIALOG && selected) ||
 				(hotspots[count].gid & HS_GRP_RUNOPTS_ALL && selected) ||
 				(hotspots[count].gid == HS_GRP_SSTATE && selected) ||
-				(hotspots[count].gid == HS_GRP_LDFILE && selected) ||
-				(hotspots[count].gid == HS_GRP_VKEYB && selected && joystick) ||
-				(hotspots[count].gid == HS_GRP_CTB && selected && joystick)) {
+				(hotspots[count].gid == HS_GRP_LDFILE && selected)
+#ifdef USE_JOYSTICK
+				|| (hotspots[count].gid == HS_GRP_VKEYB && selected && joystick) ||
+				(hotspots[count].gid == HS_GRP_CTB && selected && joystick)
+#endif
+			   ) {
 		#endif
 				/* Set the size of the hotspot's highlight.
 				 * If hl_x/y/w/h are all UNDEFINED then use hit_x/y/w/h instead */

@@ -161,7 +161,9 @@ void sdl_rcfile_read(void) {
 	int read_sound_volume, read_sound_device, read_sound_stereo, read_sound_ay_unreal;
 	int read_emulator_ramsize, read_emulator_invert;
 	int count, index, line_count, found;
+#ifdef USE_JOYSTICK
 	int read_joystick_dead_zone;
+#endif
 	int read_show_input_id;
 	char read_version[16];
 	FILE *fp;
@@ -186,7 +188,9 @@ void sdl_rcfile_read(void) {
 
 	strcpy(read_version, "");
 	read_show_input_id = UNDEFINED;
+#ifdef USE_JOYSTICK
 	read_joystick_dead_zone = UNDEFINED;
+#endif
 	read_key_repeat.delay = UNDEFINED;
 	read_key_repeat.interval = UNDEFINED;
 	read_emulator_m1not = UNDEFINED;
@@ -256,10 +260,12 @@ void sdl_rcfile_read(void) {
 					read_show_input_id = FALSE;
 				}
 			}
+#ifdef USE_JOYSTICK
 			strcpy(key, "joystick_dead_zone=");
 			if (!strncmp(line, key, strlen(key))) {
 				sscanf(&line[strlen(key)], "%i", &read_joystick_dead_zone);
 			}
+#endif
 			strcpy(key, "key_repeat.delay=");
 			if (!strncmp(line, key, strlen(key))) {
 				sscanf(&line[strlen(key)], "%i", &read_key_repeat.delay);
@@ -482,8 +488,10 @@ void sdl_rcfile_read(void) {
 				if (index == -1) index++;
 				if (strcmp(value, "DEVICE_KEYBOARD") == 0) {
 					read_ctrl_remaps[index].device = DEVICE_KEYBOARD;
+#ifdef USE_JOYSTICK
 				} else if (strcmp(value, "DEVICE_JOYSTICK") == 0) {
 					read_ctrl_remaps[index].device = DEVICE_JOYSTICK;
+#endif
 				} else if (strcmp(value, "DEVICE_CURSOR") == 0) {
 					read_ctrl_remaps[index].device = DEVICE_CURSOR;
 				}
@@ -500,8 +508,10 @@ void sdl_rcfile_read(void) {
 				if (index == -1) index++;
 				if (strcmp(value, "DEVICE_KEYBOARD") == 0) {
 					read_ctrl_remaps[index].remap_device = DEVICE_KEYBOARD;
+#ifdef USE_JOYSTICK
 				} else if (strcmp(value, "DEVICE_JOYSTICK") == 0) {
 					read_ctrl_remaps[index].remap_device = DEVICE_JOYSTICK;
+#endif
 				} else if (strcmp(value, "DEVICE_CURSOR") == 0) {
 					read_ctrl_remaps[index].remap_device = DEVICE_CURSOR;
 				}
@@ -526,7 +536,9 @@ void sdl_rcfile_read(void) {
 	#ifdef SDL_DEBUG_RCFILE
 		printf("read_version=%s\n", read_version);
 		printf("read_show_input_id=%i\n", read_show_input_id);
+#ifdef USE_JOYSTICK
 		printf("read_joystick_dead_zone=%i\n", read_joystick_dead_zone);
+#endif
 		printf("read_key_repeat.delay=%i\n", read_key_repeat.delay);
 		printf("read_key_repeat.interval=%i\n", read_key_repeat.interval);
 		printf("read_emulator_m1not=%i\n", read_emulator_m1not);
@@ -583,6 +595,7 @@ void sdl_rcfile_read(void) {
 		/* Show input id (it's vetted) */
 		if (read_show_input_id != UNDEFINED) show_input_id = read_show_input_id;
 
+#ifdef USE_JOYSTICK
 		/* Joystick dead zone */
 		if (read_joystick_dead_zone != UNDEFINED) {
 			if (read_joystick_dead_zone >= 1 && read_joystick_dead_zone <= 99) {
@@ -592,6 +605,7 @@ void sdl_rcfile_read(void) {
 					"try 1 to 99\n", __func__);
 			}
 		}
+#endif
 		/* Key repeat delay */
 		if (read_key_repeat.delay != UNDEFINED) {
 			if (read_key_repeat.delay >= 80 && read_key_repeat.delay <= 520) {
@@ -753,7 +767,9 @@ void rcfile_write(void) {
 	}
 	fprintf(fp, "%s=%s\n", key, value);
 
+#ifdef USE_JOYSTICK
 	fprintf(fp, "joystick_dead_zone=%i\n", joystick_dead_zone);
+#endif
 	fprintf(fp, "key_repeat.delay=%i\n", sdl_key_repeat.delay);
 	fprintf(fp, "key_repeat.interval=%i\n", sdl_key_repeat.interval);
 
@@ -926,8 +942,10 @@ void rcfile_write(void) {
 			strcpy(value, "");
 			if (ctrl_remaps[count].device == DEVICE_KEYBOARD) {
 				strcat(value, "DEVICE_KEYBOARD");
+#ifdef USE_JOYSTICK
 			} else if (ctrl_remaps[count].device == DEVICE_JOYSTICK) {
 				strcat(value, "DEVICE_JOYSTICK");
+#endif
 			} else if (ctrl_remaps[count].device == DEVICE_CURSOR) {
 				strcat(value, "DEVICE_CURSOR");
 			}
@@ -946,8 +964,10 @@ void rcfile_write(void) {
 			strcpy(value, "");
 			if (ctrl_remaps[count].remap_device == DEVICE_KEYBOARD) {
 				strcat(value, "DEVICE_KEYBOARD");
+#ifdef USE_JOYSTICK
 			} else if (ctrl_remaps[count].remap_device == DEVICE_JOYSTICK) {
 				strcat(value, "DEVICE_JOYSTICK");
+#endif
 			} else if (ctrl_remaps[count].remap_device == DEVICE_CURSOR) {
 				strcat(value, "DEVICE_CURSOR");
 			}

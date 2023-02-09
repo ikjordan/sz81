@@ -20,13 +20,17 @@
 #define MAX_JOY_AXES 20
 
 #define DEVICE_KEYBOARD 1
+#ifdef USE_JOYSTICK
 #define DEVICE_JOYSTICK 2
+#endif
 #define DEVICE_CURSOR 3
 
 #define KEY_REPEAT_DELAY 320		/* Default granularity of 40ms */
 #define KEY_REPEAT_INTERVAL 120		/* Default granularity of 40ms */
 
+#ifdef USE_JOYSTICK
 #define JOYSTICK_DEAD_ZONE 75
+#endif
 
 #define CTRL_REMAPPER_INTERVAL 520	/* Default granularity of 40ms */
 
@@ -73,8 +77,10 @@
 #define SDLK_SBDOWN 357
 
 /* Variables */
+#ifdef USE_JOYSTICK
 extern SDL_Joystick *joystick;
 extern int joystick_dead_zone;
+#endif
 extern int show_input_id;
 extern int current_input_id;
 extern int runopts_emulator_speed;

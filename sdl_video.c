@@ -967,6 +967,7 @@ void sdl_video_update(void) {
 								strcpy(text, "* A reset is scheduled on save *");
 						}
 					} else if (runtime_options[3].state) {
+#ifdef USE_JOYSTICK
 						if (count == 0) {
 							sprintf(text, "%2i", joystick_dead_zone);
 						} else if (count >= 1 && count <= 2) {		
@@ -978,6 +979,7 @@ void sdl_video_update(void) {
 								strcpy(text, "* A reset is scheduled on save *");
 							}
 						}
+#endif
 					}
 					if (text[0]) {	/* Let's not go to that place - again ;) */
 						dstrect.y = srcy + desy * 8 * video.scale;
@@ -1614,6 +1616,7 @@ Uint32 adjust_colour_component(Uint32 rgb, Uint32 mask, int amount, int granulat
 	return red << 16 | green << 8 | blue;	
 }
 
+#ifdef USE_JOYSTICK
 /***************************************************************************
  * Set Joystick Configurator Text                                          *
  ***************************************************************************/
@@ -1683,7 +1686,7 @@ void set_joy_cfg_text(int textid) {
 		}
 	}
 }
-
+#endif
 /***************************************************************************
  * Save Screenshot                                                         *
  ***************************************************************************/

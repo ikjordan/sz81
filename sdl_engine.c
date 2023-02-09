@@ -85,12 +85,16 @@ int sdl_init(void) {
 	for (count = 0; count < MAX_FONTS; count++)
 		zx80font.scaled[count] = zx81font.scaled[count] = 
 			zx82font.scaled[count] = NULL;
+#ifdef USE_JOYSTICK
 	joystick = NULL;
+#endif
 	wm_icon = NULL;
 
 	/* Initialise everything to a default here that could possibly be
 	 * overridden by a command line option or from an rcfile */
+#ifdef USE_JOYSTICK
 	joystick_dead_zone = JOYSTICK_DEAD_ZONE;
+#endif
 	sdl_key_repeat.delay = KEY_REPEAT_DELAY;
 	sdl_key_repeat.interval = KEY_REPEAT_INTERVAL;
 	sdl_emulator.model = &zx80;		/* It's a lot easier to do this */
@@ -156,7 +160,9 @@ int sdl_init(void) {
 	video.redraw = TRUE;
 	vkeyb.state = FALSE;
 	ctrl_remapper.state = FALSE;
+#ifdef USE_JOYSTICK
 	joy_cfg.state = FALSE;
+#endif
 	rcfile.rewrite = FALSE;
 	sdl_zx80rom.state = FALSE;
 	sdl_zx81rom.state = FALSE;
@@ -185,7 +191,11 @@ int sdl_init(void) {
 	dialog.text[0] = NULL;
 
 	/* Initialise SDL */
-	if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)) {
+	uint32_t flags = SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO;
+#ifdef USE_JOYSTICK
+	flags |= SDL_INIT_JOYSTICK
+#endif
+	if (SDL_Init(flags)) {
 		fprintf(stderr, "%s: Cannot initialise SDL: %s", __func__,
 			SDL_GetError());
 		return TRUE;
@@ -547,7 +557,9 @@ void sdl_component_executive(void) {
 			if ((runtime_options_which() < MAX_RUNTIME_OPTIONS)) {
 				if (vkeyb.state) vkeyb.state = FALSE;
 				/* Update the joycfg text */
+#ifdef USE_JOYSTICK
 				set_joy_cfg_text(0);
+#endif
 				/* It's a runopts page change so don't reset PgUp/PgDn
 				 * (this requires that we don't reset any key repeat) */
 				keyboard_buffer_reset(FALSE, SDLK_PAGEUP, SDLK_PAGEDOWN);
@@ -788,6 +800,7 @@ void clean_up_before_exit(void) {
 		if (zx82font.scaled[count]) SDL_FreeSurface(zx82font.scaled[count]);
 	}
 
+#ifdef USE_JOYSTICK
 	#ifdef PLATFORM_GP2X
 		#if defined(TOOLCHAIN_OPEN2X) || defined(TOOLCHAIN_OPENWIZ)
 			if (joystick) SDL_JoystickClose(joystick);
@@ -795,7 +808,7 @@ void clean_up_before_exit(void) {
 	#else
 		if (joystick) SDL_JoystickClose(joystick);
 	#endif
-
+#endif
 	if (wm_icon) SDL_FreeSurface(wm_icon);
 
 	if (sdl_emulator.networking) w_exit();

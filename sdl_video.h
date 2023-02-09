@@ -19,12 +19,13 @@
 #define MAX_RUNTIME_OPTIONS 4
 #define MAX_FRAMESKIP 9
 
+#ifdef USE_JOYSTICK
 /* Joystick configurator text IDs */
 #define JOY_CFG_TEXT_DEFAULT_SETTINGS 0
 #define JOY_CFG_TEXT_PRESS_SOMETHING 1
 #define JOY_CFG_TEXT_ACCEPTED 2
 #define JOY_CFG_TEXT_CANCELLED 3
-
+#endif
 /* Variables */
 extern char *runtime_options_text0[24];
 extern char *runtime_options_text1[24];
@@ -51,7 +52,9 @@ void scale_surface(SDL_Surface *original, SDL_Surface *scaled);
 void draw_shadow(SDL_Rect dstrect, int alpha);
 void cycle_resolutions(void);
 Uint32 adjust_colour_component(Uint32 rgb, Uint32 mask, int amount, int granulate);
+#ifdef USE_JOYSTICK
 void set_joy_cfg_text(int textid);
+#endif
 void save_screenshot(void);
 
 
