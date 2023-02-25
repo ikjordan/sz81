@@ -17,7 +17,9 @@
 
 /* Includes */
 #include "sdl_engine.h"
+#ifndef ZXPICO
 #include "w5100.h"
+#endif
 #include "zx81.h"
 #ifndef Win32
 #include <sys/ioctl.h>
@@ -184,12 +186,14 @@ int sdl_init(void) {
 	dialog.title = "";	/* strlen doesn't like NULLs ;) */
 	dialog.text[0] = NULL;
 
+#ifndef ZXPICO
 	/* Initialise SDL */
 	if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)) {
 		fprintf(stderr, "%s: Cannot initialise SDL: %s", __func__,
 			SDL_GetError());
 		return TRUE;
 	}
+#endif
 
 	atexit(clean_up_before_exit);
 
@@ -198,6 +202,7 @@ int sdl_init(void) {
 	#if defined(PLATFORM_GP2X)
 	#elif defined(PLATFORM_ZAURUS)
 	#else
+#ifndef ZXPICO
 		strcpy(filename, PACKAGE_DATA_DIR);
 		strcatdelimiter(filename);
 		strcat(filename, IMG_WM_ICON);
@@ -212,6 +217,7 @@ int sdl_init(void) {
 
 		/* Set display window title */
 		SDL_WM_SetCaption("sz81", "sz81");
+#endif
 	#endif
 
 	/* Set-up the local data directory */
@@ -229,6 +235,9 @@ int sdl_init(void) {
 int sdl_com_line_process(int argc, char *argv[]) {
 	int count;
 
+#ifdef ZXPICO
+	argc = 0;
+#endif
 #ifdef __amigaos4__
 	if(argc == 0) amiga_read_tooltypes((struct WBStartup *)argv);
 #endif
@@ -358,6 +367,7 @@ int sdl_com_line_process(int argc, char *argv[]) {
  * here to keep things organised and to cut down on code duplication */
 
 void sdl_component_executive(void) {
+#ifndef ZXPICO
 	static int active_components = 0;
 	static int ctrl_remapper_state = FALSE;
 	static int sdl_emulator_model = 0;
@@ -595,6 +605,7 @@ void sdl_component_executive(void) {
 	if (save_state_dialog.state) active_components |= COMP_SSTATE;
 	if (dialog.state) active_components |= COMP_DIALOG;
 
+#endif
 }
 
 /***************************************************************************
@@ -612,6 +623,7 @@ void sdl_component_executive(void) {
 int get_active_component(void) {
 	int retval;
 
+#ifndef ZXPICO
 	if (dialog.state) {
 		retval = COMP_DIALOG;
 	} else if (runtime_options_which() < MAX_RUNTIME_OPTIONS) {
@@ -630,6 +642,10 @@ int get_active_component(void) {
 		retval = 0;
 	}
 
+#else
+	// TO DO PICO: Check
+	retval = 0;
+#endif
 	return retval;
 }
 
@@ -643,9 +659,14 @@ int get_active_component(void) {
 int runtime_options_which(void) {
 	int count;
 	
+#ifndef ZXPICO
 	for (count = 0; count < MAX_RUNTIME_OPTIONS; count++)
 		if (runtime_options[count].state) break;
 	
+#else
+	// TO DO PICO: Check
+	count = MAX_RUNTIME_OPTIONS;
+#endif
 	return count;
 }
 
@@ -654,8 +675,12 @@ int runtime_options_which(void) {
  ***************************************************************************/
 
 void sdl_timer_init(void) {
+#ifndef ZXPICO
 	/* Create a 10ms timer */
 	sdl_emulator.timer_id = SDL_AddTimer (10, emulator_timer, NULL);
+#else
+	// TO DO PICO: Add repating timer
+#endif
 }
 
 /***************************************************************************
@@ -663,6 +688,9 @@ void sdl_timer_init(void) {
  ***************************************************************************/
 
 Uint32 emulator_timer(Uint32 interval, void *param) {
+#ifdef ZXPICO
+	// TO DO PICO: Make this the callback for pico timer
+#else
 	static int intervals = 0;
 
 	/* speed setting is partly done here, partly in sz81.c... */
@@ -674,6 +702,7 @@ Uint32 emulator_timer(Uint32 interval, void *param) {
 	}
 	
 	return interval;
+#endif
 }
 
 /***************************************************************************
@@ -730,6 +759,7 @@ int emulator_hold(int *condition) {
 
 void emulator_exit(void) {
 
+#ifndef ZXPICO
         SDL_PauseAudio(1);
 
 	/* If the rcfile is scheduled for writing then get user confirmation
@@ -752,6 +782,7 @@ void emulator_exit(void) {
 	if (get_active_component() & COMP_RUNOPTS_ALL)
 		runopts_transit(TRANSIT_OUT);
 
+#endif
 	/* Exit mainloop on return */
 	interrupted = INTERRUPT_EMULATOR_EXIT;
 }
@@ -761,6 +792,7 @@ void emulator_exit(void) {
  ***************************************************************************/
 
 void clean_up_before_exit(void) {
+#ifndef ZXPICO
 	int count;
 
 	if (load_file_dialog.dirlist) free(load_file_dialog.dirlist);
@@ -806,5 +838,8 @@ void clean_up_before_exit(void) {
 	#ifdef __amigaos4__
 		amiga_close_libs();
 	#endif
+#else
+	// TO DO PICO: Remove timer?
+#endif
 }
 

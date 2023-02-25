@@ -21,7 +21,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef ZXPICO
 #include <SDL/SDL_main.h>
+#endif
 #include "sdl.h"
 #include "common.h"
 #include "sound.h"
@@ -68,16 +70,21 @@ void update_scrn(void) {
 		ptr = scrnbmp + (y + ZX_VID_X_YOFS) * 
 			ZX_VID_FULLWIDTH / 8 + ZX_VID_X_XOFS / 8;
 		optr = scrnbmp_old + (ptr - scrnbmp);
+#ifndef ZXPICO
 		cptr = scrnbmpc + (y + ZX_VID_X_YOFS) * 
 			ZX_VID_FULLWIDTH + ZX_VID_X_XOFS;
+#endif
 		for (x = 0; x < ZX_VID_X_WIDTH; x += 8, ptr++, optr++) {
 			d = *ptr;
 			if (d != *optr || refresh_screen || chromamode) {
 				if (sdl_emulator.invert) d = ~d;
 				for (a = 0, mask = 128; a < 8; a++, mask >>= 1) {
+#ifndef ZXPICO
 					if (chromamode) {
 						vptr[y * 400 + x + a] = dc = *(cptr++);
-					} else {
+					} else
+#endif
+					{
 						vptr[y * 400 + x + a] = ((d&mask) ? 0 : 15);
 					}
 				}
@@ -89,8 +96,11 @@ void update_scrn(void) {
 	memcpy(scrnbmp_old, scrnbmp, ZX_VID_FULLHEIGHT * ZX_VID_FULLWIDTH / 8);
 
 	refresh_screen = 0;
-
+#ifndef ZXPICO
 	sdl_video_update();
+#else
+	// TO DO PICO: Add update
+#endif
 }
 
 /***************************************************************************
@@ -107,6 +117,7 @@ void check_events(void) {
 	if (sdl_emulator.state && !sdl_emulator.paused) {
 		for (y = 0; y < 8; y++) {	/* 8 half-rows */
 			b = 0;					/* we set bits in b as appropriate */
+#ifndef ZXPICO
 			switch (y) {			/* below comments given in order b1->b5 */
 				/* left-hand side */
 				case 0:	/* sft,z,x,c,v */
@@ -171,6 +182,7 @@ void check_events(void) {
 					if (keyboard_buffer[SDLK_b]) b |= 16;
 					break;
 			}
+#endif
 			/* some things need top bits to be 1 */
 			keyports[y] = ((b ^ 31) | 0xe0);
 		}

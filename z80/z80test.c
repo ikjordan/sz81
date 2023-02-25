@@ -26,6 +26,7 @@ BYTE zx81_opcode_fetch(int Address)
 {
         BYTE data;
 	data = zx81_readbyte(Address);
+        printf("zx81_opcode_fetch addr:%x Data %x\n", Address, data);
 	return data;
 }
 
@@ -58,11 +59,11 @@ int main()
 	z80_init();
 	z80_reset();
 
-	printf("PC: %d", PC);
+	printf("PC: %d\n", PC);
 
 	ts = z80_do_opcode();
 
-	printf(" TS: %d\n",ts);
+	printf("PC: %d TS: %d\n", PC, ts);
 
 	return 0;
 }

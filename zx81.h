@@ -1,7 +1,10 @@
 #ifndef _ZX81_H_
 #define _ZX81_H_
 
-extern unsigned char scrnbmp[],scrnbmp_old[],scrnbmpc[];
+extern unsigned char scrnbmp[],scrnbmp_old[];
+#ifndef ZXPICO
+extern unsigned char scrnbmpc[];
+#endif
 extern unsigned long frames;
 
 #define CFGBYTE char

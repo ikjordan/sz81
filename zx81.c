@@ -7,7 +7,9 @@
 #include "common.h"
 #include "sound.h"
 #include "z80/z80.h"
+#ifndef ZXPICO
 #include "w5100.h"
+#endif
 
 #include "types.h"
 #include "dissz80.h"
@@ -46,8 +48,10 @@ unsigned char scrnbmp[ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT/8];      /* displayed *
 unsigned char scrnbmp_old[ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT/8];  /* checked against for diffs */
 
 /* chroma */
+#ifndef ZXPICO
 unsigned char scrnbmpc_new[ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT];   /* written */
 unsigned char scrnbmpc[ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT];       /* displayed */
+#endif
 
 static int RasterX = 0;
 static int RasterY = 0;
@@ -348,8 +352,10 @@ void Plot(int c)
 
 	b = scrnbmp_new[kh];
 	if (c&0x01) b |= m; else b &= ~m;
+#ifndef ZXPICO
 	if (zx81.colour!=COLOURDISABLED) scrnbmpc_new[k] = c >> 4;
 	scrnbmp_new[kh] = b;
+#endif
 }
 
 int myrandom( int x )
@@ -1286,10 +1292,12 @@ void zx81_writeport(int Address, int Data, int *tstates)
                 LastInstruction = LASTINSTOUTFE;
                 break;
 
+#ifndef ZXPICO
 	case WIZ_MODE:
 	case WIZ_ADRH:
 	case WIZ_ADRL:
 	case WIZ_DATA: if (sdl_emulator.networking) w_write(Address&255,Data); break;
+#endif
 
 #ifdef ZXMORE
 	case 0xf5:
@@ -1969,10 +1977,12 @@ BYTE zx81_readport(int Address, int *tstates)
 		        return sp_on ? 255 : 0;
 #endif
 
+#ifndef ZXPICO
 		case WIZ_MODE:
 		case WIZ_ADRH:
 		case WIZ_ADRL:
 		case WIZ_DATA: if (sdl_emulator.networking) return w_read(Address&255);
+#endif
 
                 default:
                         break;
@@ -2002,7 +2012,9 @@ void checkvsync(int tolchk)
 		dest = 0;
 
 		memcpy(scrnbmp,scrnbmp_new,sizeof(scrnbmp));
+#ifndef ZXPICO
 		if (zx81.colour!=COLOURDISABLED) memcpy(scrnbmpc,scrnbmpc_new,sizeof(scrnbmpc));
+#endif
 	}
 }
 

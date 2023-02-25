@@ -54,7 +54,9 @@ extern void sdl_set_redraw_video();
 #include "z80/z80.h"
 #include "zx81.h"
 #include "allmain.h"
+#ifndef ZXPICO
 #include "w5100.h"
+#endif
 
 extern ZX81 zx81;
 
@@ -782,11 +784,14 @@ if(zx81.machine==MACHINEZX81)
 if(zx81.machine==MACHINELAMBDA)
   lambdahacks();
 
+#ifndef ZXPICO
  if (sdl_emulator.networking) w_init();
+#endif
 
 /* initialise shared memory */
 
 #ifndef Win32
+#ifndef ZXPICO
  if (rwsz81mem==1) {
 	 fdsz81mem = shm_open("/sz81mem", O_RDONLY, S_IRUSR | S_IWUSR);
 	 if (fdsz81mem < 0) {
@@ -808,17 +813,20 @@ if(zx81.machine==MACHINELAMBDA)
 	}
 }
 #endif
+#endif
 
 }
 
 void exitmem()
 {
 #ifndef Win32
+#ifndef ZXPICO
 	if (rwsz81mem) {
 		if (munmap(sz81mem, SHMSIZ) < 0) perror("munmap");
 		if (close(fdsz81mem < 0)) perror("close");
 		if (rwsz81mem==2) { if (shm_unlink("/sz81mem") < 0) perror("shm_unlink"); }
 	}
+#endif
 #endif
 #ifdef ZXMORE
 	if (zxmmod) {
