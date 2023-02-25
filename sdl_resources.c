@@ -1482,6 +1482,7 @@ int sdl_zxroms_init(void) {
 	return retval;
 }
 
+#ifndef ZXPICO
 /***************************************************************************
  * Notification Show                                                       *
  ***************************************************************************/
@@ -1515,7 +1516,6 @@ int sdl_zxroms_init(void) {
  *                        hasn't been used yet) */
 
 void notification_show(int funcid, struct Notification *notification) {
-#ifndef ZXPICO
 	Uint32 fg_colour, bg_colour, fg_colourRGB, bg_colourRGB;
 	int window_x, window_y, window_w, window_h;
 	static struct Notification the_nfn;
@@ -1655,6 +1655,6 @@ void notification_show(int funcid, struct Notification *notification) {
 
 		}
 	}
-#endif
 }
+#endif
 

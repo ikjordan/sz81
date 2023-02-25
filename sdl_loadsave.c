@@ -190,7 +190,9 @@ int save_state_dialog_slots_populate(void) {
 
 int sdl_save_file(int parameter, int method) {
 	char fullpath[256], filename[256];
+#ifndef ZXPICO
 	struct Notification notification;
+#endif
 	int retval = FALSE;
 	int index;
 	FILE *fp;
@@ -397,6 +399,7 @@ printf("Creating file %s...\n",fullpath);
 			fclose(fp);
 		} else {
 			retval = TRUE;
+#ifndef ZXPICO
 			/* Warn the user via the GUI that the save failed */
 			if (method == SAVE_FILE_METHOD_STATESAVE) {
 				strcpy(notification.title, "Save State");
@@ -406,6 +409,10 @@ printf("Creating file %s...\n",fullpath);
 			strcpy(notification.text, "Failed");
 			notification.timeout = NOTIFICATION_TIMEOUT_1250;
 			notification_show(NOTIFICATION_SHOW, &notification);
+#else
+			printf("Save state failed\n");
+#endif
+
 		}
 	}
 
@@ -435,7 +442,9 @@ printf("Creating file %s...\n",fullpath);
 
 int sdl_load_file(int parameter, int method) {
 	char fullpath[256], filename[256];
+#ifndef ZXPICO
 	struct Notification notification;
+#endif
 	int retval = FALSE;
 	int count, index;
 	int ramsize;
@@ -795,6 +804,7 @@ int sdl_load_file(int parameter, int method) {
 				method == LOAD_FILE_METHOD_SELECTLOAD || 
 				method == LOAD_FILE_METHOD_FORCEDLOAD || 
 				method == LOAD_FILE_METHOD_STATELOAD) {
+#ifndef ZXPICO
 				/* Warn the user via the GUI that the load failed */
 				if (method == LOAD_FILE_METHOD_STATELOAD) {
 					strcpy(notification.title, "Load State");
@@ -804,6 +814,9 @@ int sdl_load_file(int parameter, int method) {
 				strcpy(notification.text, "Failed");
 				notification.timeout = NOTIFICATION_TIMEOUT_1250;
 				notification_show(NOTIFICATION_SHOW, &notification);
+#else
+				printf("Load state failed\n");
+#endif
 			}
 		}
 	}

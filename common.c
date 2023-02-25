@@ -1558,7 +1558,12 @@ if(sound_enabled)
 #endif
 
 #ifdef SZ81	/* Added by Thunor */
+#ifndef ZXPICO
 while(!signal_int_flag) SDL_Delay(10);
+#else
+while(!signal_int_flag) usleep(10);
+// TO DO PICO:
+#endif
 #else
 /* we leave it blocked most of the time, only unblocking
  * temporarily with sigsuspend().

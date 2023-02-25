@@ -37,6 +37,7 @@
 #define LOCAL_SCNSHT_DIR "scnsht"
 #define LOCAL_PROGRM_DIR "progrm"
 
+#ifndef ZXPICO
 /* Bitmap font IDs */
 #define BMF_FONT_ZX80 0
 #define BMF_FONT_ZX81 1
@@ -49,6 +50,7 @@
 #define IMG_ZX81_FONT "zx81font.bmp"
 #define IMG_ZX82_FONT "zx82font.bmp"
 #define IMG_SZ81_ICONS "sz81icons.bmp"
+#endif
 
 #define ROM_ZX80 "zx80.rom"
 #ifdef ZXPAND
@@ -85,6 +87,7 @@
 
 
 /* Variables */
+#ifndef ZXPICO
 extern SDL_Surface *wm_icon;
 
 struct Notification {
@@ -104,12 +107,14 @@ typedef struct {
 	char *title;					/* The title bar text */
 	char *text[MAX_DIALOG_ROWS];	/* A multi-line message */
 } dialog_;
+#endif
 
 typedef struct {
 	char filename[256];
 	int rewrite;
 } rcfile_;
 
+#ifndef ZXPICO
 typedef struct colourtable {
 	Uint32 colour_key;
 	Uint32 bmf_fg_default;
@@ -160,23 +165,26 @@ typedef struct {
 } control_bar_;
 
 extern dialog_ dialog;
-extern rcfile_ rcfile;
 extern colourtable_ colours;
 extern bmpfont_ zx80font, zx81font, zx82font;	
 extern sz81icons_ sz81icons;
 extern vkeyb_ vkeyb;
 extern control_bar_ control_bar;
+#endif
+
+extern rcfile_ rcfile;
 
 /* Function prototypes */
 void local_data_dir_init(void);
 void rcfile_write(void);
+#ifndef ZXPICO
 int fonts_init(void);
 int vkeyb_init(void);
 int vkeyb_alpha_apply(void);
 int sz81icons_init(void);
 int control_bar_init(void);
 void notification_show(int funcid, struct Notification *notification);
-
+#endif
 
 
 

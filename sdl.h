@@ -29,7 +29,26 @@
  */
 
 /* Includes */
+#ifndef ZXPICO
 #include <SDL/SDL.h>
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <memory.h>
+#include <ctype.h>
+typedef uint32_t Uint32;
+typedef uint16_t Uint16;
+typedef uint8_t Uint8;
+
+// Temp defines
+typedef uint32_t SDL_Surface;
+typedef uint32_t SDL_Rect;
+typedef void* SDL_TimerID;
+
+#define SDL_FULLSCREEN 1
+#endif
 
 /* Defines */
 #define MAX_KEYCODES 358	/* SDL stops at 322 and then I extend them */
