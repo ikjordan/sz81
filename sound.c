@@ -1015,8 +1015,7 @@ if(sound_vsync)
 }
 
 
-void sound_beeper(int on)
-{
+sound_beeper{
 unsigned char *ptr;
 int newpos,subpos;
 int val,subval;
@@ -1116,5 +1115,14 @@ beeper_last_subpos=0;
 sixteenbit=0;
 }
 #endif
+#else
+void sound_beeper(int on)
+{
+
+}
+
+void sound_ay_write(int reg,int val,int dev)
+{
+}
 
 #endif	/* OSS_SOUND_SUPPORT */

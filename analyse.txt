@@ -1,0 +1,43 @@
+Effects of command line variables:
+Networking
+-n  enable networking
+sdl_com_line.networking
+Not checked if SIOCGIFHWADDR not defined
+
+Memory
+-R  enable reading from shared memory
+sdl_com_line.rsz81mem 
+-W  enable writing to shared memory
+sdl_com_line.wsz81mem
+
+Attempt compilation with:
+PART sdl_main.c Clone - Has main and dispay
+YES common.c
+YES sound.c But initially do not define OSS_SOUND_SUPPORT 
+YES zx81config.c 
+NO w5100.c No - networking, need to remove dependence
+PART sdl_engine.c Need parts
+NO sdl_hotspots.c
+NO sdl_input.c Mainly for dialogs and virtual keybaord
+Yes sdl_loadsave.c Fairly self contained - general file handling
+NO sdl_resources.c Contains icons, virtual keyboard etc Will need to handle directories
+No sdl_sound.c Need to translate into pico interrupt
+NO sdl_video.c 
+YES z80/z80.c 
+YES z80/z80_ops.c (includes rest of op codes)
+YES zx81.c 
+? dissz80.c Do we need a disassembler?
+? tables.c Part of dZ80
+? noscript.c to fake dissz80p
+
+Needs simple repeating 10ms timer
+Created by emulator_timer in sdl_engine.c
+
+Rules
+#define ZXPICO for all changes
+Keep SZ81 defined, initially undefine OSS_SOUND_SUPPORT
+All changes and additions within
+#ifdef ZXPICO or #ifndef ZXPICO
+no deletes
+Disable Chroma, Network and shard memory through #ifndef ZXPICO
+move to CMake and create CMakeList.txt

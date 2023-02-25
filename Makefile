@@ -19,7 +19,10 @@ PACKAGE_DATA_DIR?=$(PREFIX)/data
 
 # For sz81 OSS_SOUND_SUPPORT is now synonymous with SDL_SOUND_SUPPORT.
 # Comment this out if you don't want sound support.
-SOUNDDEF=-DOSS_SOUND_SUPPORT
+#SOUNDDEF=-DOSS_SOUND_SUPPORT
+
+# Build for ZXPICO
+ZXPICO=-DZXPICO
 
 # You won't need to alter these
 TARGET=$(shell cat TARGET)
@@ -48,7 +51,14 @@ CFLAGS+=-Wall -Wno-unused-result `$(SDL_CONFIG) --cflags` -DVERSION=\"$(VERSION)
 
 LINK=$(CC)
 #LDFLAGS=
-LIBS=`$(SDL_CONFIG) --libs` -lrt -Lsndrender -lsndrender -Lzxpand -lzxpand
+#LIBS=`$(SDL_CONFIG) --libs` -lrt -Lsndrender -lsndrender -Lzxpand -lzxpand
+LIBS=`$(SDL_CONFIG) --libs` -lrt
+ifdef SOUNDDEF
+LIBS+=-Lsndrender -lsndrender
+endif
+ifndef ZXPICO
+LIBS+=-Lzxpand -lzxpand
+endif
 
 # You won't need to alter anything below
 all: $(SOURCES) $(TARGET)
