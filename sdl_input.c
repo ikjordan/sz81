@@ -1870,8 +1870,9 @@ void manage_cursor_input(void) {
  ***************************************************************************/
 
 void manage_all_input(void) {
+#ifdef OSS_SOUND_SUPPORT
 	struct Notification notification;
-
+#endif
 	/* Note that I'm currently ignoring modifier states */
 	if (device == DEVICE_KEYBOARD) {
 		if (id == SDLK_F1) {

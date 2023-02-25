@@ -565,12 +565,13 @@ void zx81_writebyte(int Address, int Data)
 #endif
         noise = (noise<<8) | Data;
 
+#ifdef OSS_SOUND_SUPPORT
         if (zx81.aytype == AY_TYPE_QUICKSILVA)
         {
                 if (Address == 0x7fff) SelectAYReg=Data&15;
                 if (Address == 0x7ffe) sound_ay_write(SelectAYReg,Data,0);
         }
-
+#endif
         // The lambda colour board has 1k of RAM mapped between 8k-16k (8 shadows)
         // with a further 8 shadows between 49152 and 57344.
 
@@ -1219,15 +1220,18 @@ void zx81_writeport(int Address, int Data, int *tstates)
 			return;
 		}
 #endif
+#ifdef OSS_SOUND_SUPPORT
                 if (zx81.aytype==AY_TYPE_ZONX)
                         sound_ay_write(SelectAYReg, Data, 1);
+#endif
                 break;
-
         case 0xbf:
         case 0xcf:
         case 0xdf:
+#ifdef OSS_SOUND_SUPPORT
                 if (zx81.aytype==AY_TYPE_ACE) sound_ay_write(SelectAYReg, Data, 0);
                 if (zx81.aytype==AY_TYPE_ZONX) SelectAYReg=Data&15;
+#endif
                 break;
 
 #ifdef APU

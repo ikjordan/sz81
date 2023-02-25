@@ -158,7 +158,9 @@ void sdl_rcfile_read(void) {
 	int read_emulator_m1not, read_emulator_speed, read_emulator_frameskip, read_emulator_model;
 	int read_emulator_wrx, read_emulator_chrgen;
 	int read_vkeyb_alpha, read_vkeyb_autohide, read_vkeyb_toggle_shift;
+#ifdef OSS_SOUND_SUPPORT
 	int read_sound_volume, read_sound_device, read_sound_stereo, read_sound_ay_unreal;
+#endif
 	int read_emulator_ramsize, read_emulator_invert;
 	int count, index, line_count, found;
 	int read_joystick_dead_zone;
@@ -197,10 +199,12 @@ void sdl_rcfile_read(void) {
 	read_emulator_model = UNDEFINED;
 	read_emulator_ramsize = UNDEFINED;
 	read_emulator_invert = UNDEFINED;
+#ifdef OSS_SOUND_SUPPORT
 	read_sound_volume = UNDEFINED;
 	read_sound_device = UNDEFINED;
 	read_sound_stereo = UNDEFINED;
 	read_sound_ay_unreal = UNDEFINED;
+#endif
 	read_vkeyb_alpha = UNDEFINED;
 	read_vkeyb_autohide = UNDEFINED;
 	read_vkeyb_toggle_shift = UNDEFINED;
