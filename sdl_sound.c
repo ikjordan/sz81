@@ -34,6 +34,7 @@
  *          returns TRUE on error */
 
 int sdl_sound_init(int freq, int *stereo, int *sixteenbit) {
+#ifndef ZXPICO
 	SDL_AudioSpec desired, obtained;
 	
 	sdl_sound.buffer_start = sdl_sound.buffer_end = 0;
@@ -92,6 +93,7 @@ int sdl_sound_init(int freq, int *stereo, int *sixteenbit) {
 		printf("  obtained.samples=%i\n", obtained.samples);
 	#endif
 
+#endif
 	return FALSE;
 }
 
@@ -103,6 +105,7 @@ int sdl_sound_init(int freq, int *stereo, int *sixteenbit) {
  * stored in our linear sound buffer via the sound frame function below */
 
 void sdl_sound_callback(void *userdata, Uint8 *stream, int len) {
+#ifndef ZXPICO
 	#if defined(SDL_DEBUG_SOUND) || defined(SDL_DEBUG_TIMING)
 		static Uint32 lasttime = 0;
 		static int Hz = 0;
@@ -131,6 +134,7 @@ void sdl_sound_callback(void *userdata, Uint8 *stream, int len) {
 		*(stream++) = (sdl_sound.buffer[sdl_sound.buffer_start++] & 0xff00) >> 8;
 		if (sdl_sound.buffer_start >= SOUND_BUFFER_SIZE) sdl_sound.buffer_start = 0;
 	}
+#endif
 }
 
 /***************************************************************************
@@ -143,6 +147,7 @@ void sdl_sound_callback(void *userdata, Uint8 *stream, int len) {
  * from interfering with what we're doing here */
 
 void sdl_sound_frame(Uint16 *data, int len) {
+#ifndef ZXPICO
 #ifdef SDL_DEBUG_SOUND
 	static int ovfcnt = 0;
 #endif	
@@ -159,6 +164,7 @@ void sdl_sound_frame(Uint16 *data, int len) {
 		}
 	}
 	SDL_UnlockAudio();
+#endif
 }
 
 /***************************************************************************
@@ -166,10 +172,12 @@ void sdl_sound_frame(Uint16 *data, int len) {
  ***************************************************************************/
 
 void sdl_sound_end(void) {
+#ifndef ZXPICO
 	if (sdl_sound.state) {
 		sdl_sound.state = FALSE;
 		SDL_CloseAudio();
 	}
+#endif
 }
 
 #endif	/* OSS_SOUND_SUPPORT */

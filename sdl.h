@@ -118,12 +118,20 @@ typedef struct {
 
 typedef struct {
 	int state;
+#ifndef ZXPICO
 	unsigned char data[64 * 1024];
+#else
+	unsigned char data[4 * 1024];
+#endif
 } sdl_zx80rom_;
 
 typedef struct {
 	int state;
+#ifndef ZXPICO
 	unsigned char data[64 * 1024];
+#else
+	unsigned char data[8 * 1024];
+#endif
 } sdl_zx81rom_;
 
 typedef struct {

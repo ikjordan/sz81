@@ -24,8 +24,10 @@
 
 /* Variables */
 //unsigned char vga_graphmemory[64 * 1024]; // Sorry about that!
+#ifndef ZXPICO
 unsigned char vga_graphmemory[800 * 600];
 
+#endif
 extern ZX81 zx81;
 
 char *runtime_options_text0[24];
@@ -183,6 +185,7 @@ char dialog_icons[32] = {
  *          else FALSE */
 
 int sdl_video_setmode(void) {
+#ifndef ZXPICO
 	int original_xres = video.xres;
 	int count;
 
@@ -268,6 +271,7 @@ int sdl_video_setmode(void) {
 	/* Prepare to redraw everything */
 	video.redraw = TRUE;
 
+#endif
 	return FALSE;
 }
 
@@ -277,9 +281,15 @@ int sdl_video_setmode(void) {
 /* On exit: returns a pointer to the graphics memory */
 
 unsigned char *vga_getgraphmem(void) {
+#ifndef ZXPICO
 	return vga_graphmemory;
+#else
+	// TO DO PICO:
+	return NULL;
+#endif
 }
 
+#ifndef ZXPICO
 void sdl_set_redraw_video() {
 	video.redraw = TRUE;
 }
@@ -1718,3 +1728,4 @@ void save_screenshot(void) {
 	}
 }
 
+#endif
