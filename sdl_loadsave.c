@@ -93,10 +93,12 @@ void load_file_dialog_dirlist_populate(int refresh) {
  * for savsta1.ss{o|p} to savsta9.ss{o|p} */
 
 int save_state_dialog_slots_populate(void) {
+	int retval = FALSE;
+#ifndef ZXPICO
+	// TO DO PICO: Reconsider save state in the future
 	struct dirent *direntry;
 	char foldername[256];
 	char parentname[256];
-	int retval = FALSE;
 	int count, index;
 	DIR *dirstream;
 
@@ -167,6 +169,7 @@ int save_state_dialog_slots_populate(void) {
 		fprintf(stderr, "%s: Cannot read from directory %s\n", __func__,
 			foldername);
 	}
+#endif
 
 	return retval;
 }

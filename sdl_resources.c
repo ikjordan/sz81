@@ -991,6 +991,7 @@ void rcfile_write(void) {
  *          else FALSE */
 
 int fonts_init(void) {
+#ifndef ZXPICO
 	SDL_Surface *unconverted;
 	struct bmpfont *ptrfont;
 	char filename[256];
@@ -1092,6 +1093,7 @@ int fonts_init(void) {
 		}
 	#endif
 
+#endif
 	return FALSE;
 }
 
@@ -1108,6 +1110,7 @@ int fonts_init(void) {
  *          else FALSE */
 
 int vkeyb_init(void) {
+#ifndef ZXPICO
 	SDL_Surface *unconverted, *original;
 	char filename[256];
 	int count;
@@ -1182,6 +1185,7 @@ int vkeyb_init(void) {
 	vkeyb.xoffset = (video.xres - vkeyb.scaled->w) / 2;
 	vkeyb.yoffset = (video.yres - vkeyb.scaled->h) / 2;
 
+#endif
 	return FALSE;
 }
 
@@ -1194,12 +1198,14 @@ int vkeyb_init(void) {
 int vkeyb_alpha_apply(void) {
 	int retval = FALSE;
 	
+#ifndef ZXPICO
 	if ((SDL_SetAlpha(vkeyb.scaled, SDL_SRCALPHA, vkeyb.alpha)) < 0) {
 		fprintf(stderr, "%s: Cannot set surface alpha: %s\n", __func__, 
 			SDL_GetError());
 		retval = TRUE;
 	}
 
+#endif
 	return retval;
 }
 
@@ -1212,6 +1218,7 @@ int vkeyb_alpha_apply(void) {
  *          else FALSE */
 
 int sz81icons_init(void) {
+#ifndef ZXPICO
 	SDL_Surface *unconverted;
 	char filename[256];
 
@@ -1254,6 +1261,7 @@ int sz81icons_init(void) {
 	/* Now scale the icons into the new surface */
 	scale_surface(sz81icons.original, sz81icons.scaled);
 
+#endif
 	return FALSE;
 }
 
@@ -1266,6 +1274,7 @@ int sz81icons_init(void) {
  *          else FALSE */
 
 int control_bar_init(void) {
+#ifndef ZXPICO
 	SDL_Rect srcrect, dstrect;
 	Uint32 colour;
 	int count;
@@ -1390,6 +1399,7 @@ int control_bar_init(void) {
 	control_bar.yoffset = sdl_emulator.yoffset - 19 * video.scale;
 	if (control_bar.yoffset < 0) control_bar.yoffset = 0;
 
+#endif
 	return FALSE;
 }
 
@@ -1479,6 +1489,7 @@ int sdl_zxroms_init(void) {
  *                        hasn't been used yet) */
 
 void notification_show(int funcid, struct Notification *notification) {
+#ifndef ZXPICO
 	Uint32 fg_colour, bg_colour, fg_colourRGB, bg_colourRGB;
 	int window_x, window_y, window_w, window_h;
 	static struct Notification the_nfn;
@@ -1618,5 +1629,6 @@ void notification_show(int funcid, struct Notification *notification) {
 
 		}
 	}
+#endif
 }
 

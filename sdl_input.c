@@ -180,6 +180,7 @@ void manage_sstate_input(void);
  * and sets up the control remappings. It's only called once */
 
 void sdl_keyboard_init(void) {
+#ifndef ZXPICO
 	int count, index;
 	
 	/* Erase the keyboard buffer */
@@ -770,6 +771,7 @@ void sdl_keyboard_init(void) {
 		printf("%s: ctrl_remaps index=%i\n", __func__, index);
 	#endif
 
+#endif
 }
 
 /***************************************************************************
@@ -798,9 +800,12 @@ void sdl_keyboard_init(void) {
  * On exit: returns non-zero if there are keyboard events else 0 */
 
 int keyboard_update(void) {
+	int eventfound = FALSE;
+#ifndef ZXPICO
+// TO DO PICO: Will need to capture keystrokes elsewhere
 	static int skip_update = TRUE, skip_drag = TRUE, last_hs_pressed[2];
 	static int axisstates[MAX_JOY_AXES * 2], init = TRUE;
-	int eventfound = FALSE, count, found;
+	int count, found;
 	struct Notification notification;
 	int hs_vkeyb_ctb_selected;
 	int hs_runopts_selected;
@@ -1013,7 +1018,7 @@ int keyboard_update(void) {
 								(1 - axis_end) + SDL_JoystickNumButtons (joystick);
 							virtualevent.type = SDL_JOYBUTTONUP;
 							virtualevent.jbutton.state = SDL_RELEASED;
-							SDL_PushEvent(&virtualevent);
+			:				SDL_PushEvent(&virtualevent);
 
 							/* Record its SDL_RELEASED state within axisstates */
 							axisstates[event.jaxis.axis * 2 + (1 - axis_end)] = SDL_RELEASED;
@@ -1243,6 +1248,7 @@ int keyboard_update(void) {
 		}
 	}
 
+#endif
 	return eventfound;
 }
 
@@ -1259,7 +1265,7 @@ int keyboard_update(void) {
 
 void manage_cursor_input(void) {
 	int hs_currently_selected = 0;
-	
+#ifndef ZXPICO
 	if (device == DEVICE_CURSOR) {
 
 		/* Locate currently selected hotspot for active component (there can be only one) */
@@ -1863,6 +1869,7 @@ void manage_cursor_input(void) {
 		}
 		device = UNDEFINED;	/* Erase it */
 	}
+#endif
 }
 
 /***************************************************************************
@@ -1870,6 +1877,7 @@ void manage_cursor_input(void) {
  ***************************************************************************/
 
 void manage_all_input(void) {
+#ifndef ZXPICO
 #ifdef OSS_SOUND_SUPPORT
 	struct Notification notification;
 #endif
@@ -2013,6 +2021,7 @@ void manage_all_input(void) {
 			#endif
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2025,6 +2034,7 @@ void manage_all_input(void) {
 
 void toggle_emulator_paused(int force) {
 
+#ifndef ZXPICO
 	if ((get_active_component() == COMP_VKEYB ||
 		get_active_component() == COMP_CTB ||
 		get_active_component() == COMP_EMU) ||
@@ -2036,6 +2046,7 @@ void toggle_emulator_paused(int force) {
 			sdl_emulator.paused = FALSE;
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2044,6 +2055,7 @@ void toggle_emulator_paused(int force) {
 
 void manage_dialog_input(void) {
 
+#ifndef ZXPICO
 	/* Note that I'm currently ignoring modifier states */
 	if (device == DEVICE_KEYBOARD) {
 		if ((hotspots[HS_DIALOG_BUTTON0].remap_id != UNDEFINED &&
@@ -2056,6 +2068,7 @@ void manage_dialog_input(void) {
 			dialog.state = FALSE;
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2063,6 +2076,7 @@ void manage_dialog_input(void) {
  ***************************************************************************/
 
 void manage_vkeyb_input(void) {
+#ifndef ZXPICO
 
 	/* Note that I'm currently ignoring modifier states */
 	if (device == DEVICE_KEYBOARD) {
@@ -2103,6 +2117,7 @@ void manage_vkeyb_input(void) {
 			}
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2112,11 +2127,13 @@ void manage_vkeyb_input(void) {
 
 void toggle_vkeyb_state(void) {
 
+#ifndef ZXPICO
 	if (get_active_component() == COMP_VKEYB ||
 		get_active_component() == COMP_CTB ||
 		get_active_component() == COMP_EMU) {
 		vkeyb.state = !vkeyb.state;
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2126,6 +2143,7 @@ void toggle_vkeyb_state(void) {
  * of the runtime options pages is currently active */
 
 void manage_runopts_input(void) {
+#ifndef ZXPICO
 	int hs_currently_selected;
 	int amount, index;
 	
@@ -2414,6 +2432,7 @@ void manage_runopts_input(void) {
 			}
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2422,6 +2441,7 @@ void manage_runopts_input(void) {
 /* This is called from multiple places */
 
 void toggle_runopts_state(void) {
+#ifndef ZXPICO
 	int count;
 
 	if (get_active_component() & COMP_RUNOPTS_ALL ||
@@ -2446,6 +2466,7 @@ void toggle_runopts_state(void) {
 			runopts_transit(TRANSIT_OUT);
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2453,6 +2474,7 @@ void toggle_runopts_state(void) {
  ***************************************************************************/
 
 void manage_ldfile_input(void) {
+#ifndef ZXPICO
 	static int sbhdle_anchor_point = 0;
 	char lastsubdir[256];
 	int foundsb = FALSE;
@@ -2702,6 +2724,7 @@ void manage_ldfile_input(void) {
 			hotspots_resize(HS_GRP_LDFILE);
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2710,7 +2733,7 @@ void manage_ldfile_input(void) {
 /* This is called from multiple places */
 
 void toggle_ldfile_state(void) {
-
+#ifndef ZXPICO
 	if (get_active_component() == COMP_LDFILE ||
 		get_active_component() == COMP_VKEYB ||
 		get_active_component() == COMP_CTB ||
@@ -2738,6 +2761,7 @@ void toggle_ldfile_state(void) {
 			}
 		#endif
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2745,6 +2769,7 @@ void toggle_ldfile_state(void) {
  ***************************************************************************/
 
 void manage_sstate_input(void) {
+#ifndef ZXPICO
 	struct Notification notification;
 	int found = FALSE;
 
@@ -2784,6 +2809,7 @@ void manage_sstate_input(void) {
 			toggle_sstate_state(0);
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2792,6 +2818,7 @@ void manage_sstate_input(void) {
 /* This is called from multiple places */
 
 void toggle_sstate_state(int mode) {
+#ifndef ZXPICO
 	struct Notification notification;
 
 	if (get_active_component() == COMP_SSTATE ||
@@ -2825,6 +2852,7 @@ void toggle_sstate_state(int mode) {
 			vkeyb.state = last_vkeyb_state;	/* Restore vkeyb state */
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -2839,6 +2867,7 @@ void toggle_sstate_state(int mode) {
 int runopts_is_a_reset_scheduled(void) {
 	int retval = FALSE;
 
+#ifndef ZXPICO
 	if (runopts_emulator_model != *sdl_emulator.model || 
 		runopts_emulator_ramsize != sdl_emulator.ramsize ||
 		runopts_emulator_m1not != sdl_emulator.m1not) {
@@ -2857,7 +2886,7 @@ int runopts_is_a_reset_scheduled(void) {
 	        retval = TRUE;
 #endif
 	}
-
+#endif
 	return retval;
 }
 
@@ -2880,6 +2909,7 @@ int runopts_is_a_reset_scheduled(void) {
  */
 
 void runopts_transit(int state) {
+#ifndef ZXPICO
 	static int last_state = TRANSIT_OUT;
 	static struct keyrepeat runopts_key_repeat;
 	static Uint32 runopts_colours_emu_fg;
@@ -3223,6 +3253,7 @@ void runopts_transit(int state) {
 	}
 
 	last_state = state;
+#endif
 }
 
 /***************************************************************************
@@ -3259,6 +3290,8 @@ void runopts_transit(int state) {
  */
 
 void key_repeat_manager(int funcid, SDL_Event *event, int eventid) {
+#ifndef ZXPICO
+// TO DO PICO: Will need to either remove or define SDL_Event
 	static int interval = 0, last_eventid = 0, init = TRUE;
 	static SDL_Event repeatevent;
 		
@@ -3292,6 +3325,7 @@ void key_repeat_manager(int funcid, SDL_Event *event, int eventid) {
 			key_repeat_manager(KRM_FUNC_RELEASE, NULL, eventid);
 		repeatevent = *event;
 	}
+#endif
 }
 
 /***************************************************************************
@@ -3308,6 +3342,7 @@ void key_repeat_manager(int funcid, SDL_Event *event, int eventid) {
  *           exclude1 and/or exclude2 can be used to exclude controls */
 
 void keyboard_buffer_reset(int shift_reset, int exclude1, int exclude2) {
+#ifndef ZXPICO
 	int keycode;
 
 	for (keycode = 0; keycode < MAX_KEYCODES; keycode++) {
@@ -3316,6 +3351,7 @@ void keyboard_buffer_reset(int shift_reset, int exclude1, int exclude2) {
 			!(exclude2 && keycode == exclude2)))
 			keyboard_buffer[keycode] = SDL_RELEASED;
 	}
+#endif
 }
 
 /***************************************************************************
