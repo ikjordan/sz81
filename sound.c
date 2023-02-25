@@ -1015,7 +1015,8 @@ if(sound_vsync)
 }
 
 
-sound_beeper{
+void sound_beeper(int on)
+{
 unsigned char *ptr;
 int newpos,subpos;
 int val,subval;

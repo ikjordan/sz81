@@ -35,9 +35,9 @@ extern void sound_reset(void);
 extern void sound_init(void);
 extern void sound_end(void);
 extern void sound_frame(void);
-extern void sound_ay_write(int reg,int val, int dev);
 extern void sound_fnmi(int Data);
+#endif
+extern void sound_ay_write(int reg,int val, int dev);
 extern void sound_ay_reset(void);
 extern void sound_beeper(int on);
 
-#endif
