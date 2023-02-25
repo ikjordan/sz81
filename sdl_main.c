@@ -238,18 +238,22 @@ int main(int argc, char *argv[]) {
 				 * variables that are defined within it */
 				sdl_rcfile_read();
 
+#ifndef ZXPICO
 				/* Initialise the hotspots now (this will set the
 				 * default initial vkeyb hotspot for the model) */
 				sdl_hotspots_init();
 
+#endif
 				/* Load both the ZX80 and ZX81 ROMs */
 				sdl_zxroms_init();
 
 				/* Initialise the emulator timer */
 				sdl_timer_init();
 
+#ifndef ZXPICO
 				/* Synchronise */
 				sdl_component_executive();
+#endif
 				
 				while (interrupted != INTERRUPT_EMULATOR_EXIT) {
 

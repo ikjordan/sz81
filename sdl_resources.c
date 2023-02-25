@@ -18,15 +18,17 @@
 /* Includes */
 #include "sdl_engine.h"
 
+#ifndef ZXPICO
 SDL_Surface *wm_icon;
 
 dialog_ dialog;
-rcfile_ rcfile;
 colourtable_ colours;
 bmpfont_ zx80font, zx81font, zx82font;	
 sz81icons_ sz81icons;
 vkeyb_ vkeyb;
 control_bar_ control_bar;
+#endif
+rcfile_ rcfile;
 
 /* Defines */
 /* Icon bitmap offsets that must be multiplied by video.scale */
@@ -152,12 +154,14 @@ void local_data_dir_init(void) {
 
 void sdl_rcfile_read(void) {
 	char line[256], key[64], value[192];
+#ifndef ZXPICO
 	struct ctrlremap read_ctrl_remaps[MAX_CTRL_REMAPS];
-	struct keyrepeat read_key_repeat;
 	struct colourtable read_colours;
+	int read_vkeyb_alpha, read_vkeyb_autohide, read_vkeyb_toggle_shift;
+#endif
+	struct keyrepeat read_key_repeat;
 	int read_emulator_m1not, read_emulator_speed, read_emulator_frameskip, read_emulator_model;
 	int read_emulator_wrx, read_emulator_chrgen;
-	int read_vkeyb_alpha, read_vkeyb_autohide, read_vkeyb_toggle_shift;
 #ifdef OSS_SOUND_SUPPORT
 	int read_sound_volume, read_sound_device, read_sound_stereo, read_sound_ay_unreal;
 #endif
@@ -205,6 +209,7 @@ void sdl_rcfile_read(void) {
 	read_sound_stereo = UNDEFINED;
 	read_sound_ay_unreal = UNDEFINED;
 #endif
+#ifndef ZXPICO
 	read_vkeyb_alpha = UNDEFINED;
 	read_vkeyb_autohide = UNDEFINED;
 	read_vkeyb_toggle_shift = UNDEFINED;
@@ -235,6 +240,7 @@ void sdl_rcfile_read(void) {
 		read_ctrl_remaps[count].remap_id = UNDEFINED;
 		read_ctrl_remaps[count].remap_mod_id = UNDEFINED;
 	}
+#endif
 
 	/* Read the rcfile one line at a time (trailing [CR]LFs are read too) */
 	index = -1;
@@ -362,6 +368,7 @@ void sdl_rcfile_read(void) {
 					}
 				}
 			#endif
+#ifndef ZXPICO
 			strcpy(key, "vkeyb.alpha=");
 			if (!strncmp(line, key, strlen(key))) {
 				sscanf(&line[strlen(key)], "%i", &read_vkeyb_alpha);
@@ -523,6 +530,7 @@ void sdl_rcfile_read(void) {
 				read_ctrl_remaps[index].remap_mod_id = keysym_to_keycode(value);
 				found = TRUE;	/* A complete ctrl_remap has been read */
 			}
+#endif
 		}
 	}
 	fclose(fp);
@@ -545,6 +553,7 @@ void sdl_rcfile_read(void) {
 		printf("read_sound_device=%i\n", read_sound_device);
 		printf("read_sound_stereo=%i\n", read_sound_stereo);
 		printf("read_sound_ay_unreal=%i\n", read_sound_ay_unreal);
+#ifndef ZXPICO
 		printf("read_vkeyb_alpha=%i\n", read_vkeyb_alpha);
 		printf("read_vkeyb_autohide=%i\n", read_vkeyb_autohide);
 		printf("read_vkeyb_toggle_shift=%i\n", read_vkeyb_toggle_shift);
@@ -562,6 +571,7 @@ void sdl_rcfile_read(void) {
 		printf("read_colours.hs_ctb_pressed=%06x\n", read_colours.hs_ctb_pressed);
 		printf("read_colours.hs_options_selected=%06x\n", read_colours.hs_options_selected);
 		printf("read_colours.hs_options_pressed=%06x\n", read_colours.hs_options_pressed);
+
 		for (count = 0; count < MAX_CTRL_REMAPS; count++) {
 			if (read_ctrl_remaps[count].device != UNDEFINED) {
 				printf("read_ctrl_remaps[%i].components=%i\n", count, read_ctrl_remaps[count].components);
@@ -573,6 +583,7 @@ void sdl_rcfile_read(void) {
 				printf("  read_ctrl_remaps[%i].remap_mod_id=%i\n", count, read_ctrl_remaps[count].remap_mod_id);
 			}
 		}
+#endif
 	#endif
 
 	if (strcmp(read_version, VERSION) != 0) {
@@ -674,6 +685,7 @@ void sdl_rcfile_read(void) {
 			if (read_sound_ay_unreal != UNDEFINED) sdl_sound.ay_unreal = read_sound_ay_unreal;
 		#endif
 
+#ifndef ZXPICO
 		/* Vkeyb alpha */
 		if (read_vkeyb_alpha != UNDEFINED) {
 			if (read_vkeyb_alpha >= 0 && read_vkeyb_alpha <= SDL_ALPHA_OPAQUE) {
@@ -726,6 +738,7 @@ void sdl_rcfile_read(void) {
 		if (found)
 			for (count = 0; count < MAX_CTRL_REMAPS; count++)
 				ctrl_remaps[count] = read_ctrl_remaps[count];
+#endif
 
 	}
 }
@@ -835,6 +848,7 @@ void rcfile_write(void) {
 	}
 	fprintf(fp, "%s=%s\n", key, value);
 
+#ifndef ZXPICO
 	fprintf(fp, "vkeyb.alpha=%i\n", vkeyb.alpha);
 
 	/* vkeyb.autohide */
@@ -977,6 +991,7 @@ void rcfile_write(void) {
 			fprintf(fp, "\n");
 		}
 	}
+#endif
 	fclose(fp);
 	
 	rcfile.rewrite = FALSE;
@@ -1440,6 +1455,7 @@ int sdl_zxroms_init(void) {
 				fprintf(stderr, "%s: Cannot read from %s\n", __func__, filename);
 				if (count < 2) retval = TRUE;
 			} else {
+#ifndef ZXPICO
 				/* Read in the data, max. 64k */
 				if (count == 0) {
 					sdl_zx80rom.state = fread(sdl_zx80rom.data, 1, 64 * 1024, fp);
@@ -1448,6 +1464,16 @@ int sdl_zxroms_init(void) {
 				} else if (count == 2) {
 					sdl_aszmicrom.state = fread(sdl_aszmicrom.data, 1, 4 * 1024, fp);
 				}
+#else
+				/* Read in the data, max. 64k */
+				if (count == 0) {
+					sdl_zx80rom.state = fread(sdl_zx80rom.data, 1, 4 * 1024, fp);
+				} else if (count == 1) {
+					sdl_zx81rom.state = fread(sdl_zx81rom.data, 1, 8 * 1024, fp);
+				} else if (count == 2) {
+					sdl_aszmicrom.state = fread(sdl_aszmicrom.data, 1, 4 * 1024, fp);
+				}
+#endif
 				fclose(fp);
 			}
 		}

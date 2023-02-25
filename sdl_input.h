@@ -40,6 +40,7 @@
 #define TRANSIT_IN 1
 #define TRANSIT_SAVE 2
 
+#ifndef ZXPICO
 /* Extended SDL keysyms used for hotspots+lists */
 #define SDLK_ROW00 330
 #define SDLK_ROW01 331
@@ -71,9 +72,12 @@
 #define SDLK_SBHDLE 355
 #define SDLK_SBPGDN 356
 #define SDLK_SBDOWN 357
+#endif
 
 /* Variables */
+#ifndef ZXPICO
 extern SDL_Joystick *joystick;
+#endif
 extern int joystick_dead_zone;
 extern int show_input_id;
 extern int current_input_id;
@@ -87,6 +91,7 @@ extern int runopts_sound_device;
 extern int runopts_sound_stereo;
 extern int runopts_sound_ay_unreal;
 
+#ifndef ZXPICO
 typedef struct ctrlremap {
 	int components;		/* An OR'd combination of COMP_ IDs */
 	int protected;		/* TRUE to prevent this from being runtime modified */
@@ -111,10 +116,12 @@ typedef struct {
 extern ctrlremap_ ctrl_remaps[MAX_CTRL_REMAPS];
 extern ctrl_remapper_ ctrl_remapper;
 extern joy_cfg_ joy_cfg;
+#endif
 
 /* Function prototypes */
 void toggle_emulator_paused(int force);
 void toggle_ldfile_state(void);
+#ifndef ZXPICO
 void toggle_sstate_state(int mode);
 int runopts_is_a_reset_scheduled(void);
 void runopts_transit(int state);
@@ -123,5 +130,6 @@ void keyboard_buffer_reset(int shift_reset, int exclude1, int exclude2);
 int keysym_to_keycode(char *keysym);
 char *keycode_to_keysym(int keycode);
 
+#endif
 
 

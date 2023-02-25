@@ -23,7 +23,7 @@ set(ZX81_SOURCES
 	zx81config.c
 	#w5100.c
 	sdl_engine.c
-	sdl_hotspots.c
+	#sdl_hotspots.c
 	sdl_input.c
 	sdl_loadsave.c
 	sdl_resources.c

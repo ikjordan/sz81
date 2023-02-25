@@ -20,7 +20,6 @@
 #include "zx81.h"
 
 /* Variables */
-SDL_Joystick *joystick;
 int joystick_dead_zone;
 int show_input_id;
 int current_input_id;
@@ -34,12 +33,16 @@ int runopts_sound_device;
 int runopts_sound_stereo;
 int runopts_sound_ay_unreal;
 
+#ifndef ZXPICO
+SDL_Joystick *joystick;
 ctrlremap_ ctrl_remaps[MAX_CTRL_REMAPS];
 ctrl_remapper_ ctrl_remapper;
 joy_cfg_ joy_cfg;
+#endif
 
 extern ZX81 zx81;
 
+#ifndef ZXPICO
 /* Defines */
 #define MAX_KEYSYMS (138 + 6)
 
@@ -93,6 +96,7 @@ int device, id, mod_id, state;
  * convenience. virtualevent is used in several places to push custom
  * events and so there is no reason why event cannot be reused either */
 SDL_Event event, virtualevent;
+
 
 /* The last vkeyb state is sometimes recorded so that it can be restored */
 int last_vkeyb_state;
@@ -172,6 +176,7 @@ void toggle_runopts_state(void);
 void manage_ldfile_input(void);
 void manage_sstate_input(void);
 
+#endif
 
 /***************************************************************************
  * Keyboard Initialise                                                     *
@@ -2812,13 +2817,13 @@ void manage_sstate_input(void) {
 #endif
 }
 
+#ifndef ZXPICO
 /***************************************************************************
  * Toggle Save State Dialog State                                          *
  ***************************************************************************/
 /* This is called from multiple places */
 
 void toggle_sstate_state(int mode) {
-#ifndef ZXPICO
 	struct Notification notification;
 
 	if (get_active_component() == COMP_SSTATE ||
@@ -2852,7 +2857,6 @@ void toggle_sstate_state(int mode) {
 			vkeyb.state = last_vkeyb_state;	/* Restore vkeyb state */
 		}
 	}
-#endif
 }
 
 /***************************************************************************
@@ -2867,7 +2871,6 @@ void toggle_sstate_state(int mode) {
 int runopts_is_a_reset_scheduled(void) {
 	int retval = FALSE;
 
-#ifndef ZXPICO
 	if (runopts_emulator_model != *sdl_emulator.model || 
 		runopts_emulator_ramsize != sdl_emulator.ramsize ||
 		runopts_emulator_m1not != sdl_emulator.m1not) {
@@ -2886,7 +2889,6 @@ int runopts_is_a_reset_scheduled(void) {
 	        retval = TRUE;
 #endif
 	}
-#endif
 	return retval;
 }
 
@@ -2909,7 +2911,6 @@ int runopts_is_a_reset_scheduled(void) {
  */
 
 void runopts_transit(int state) {
-#ifndef ZXPICO
 	static int last_state = TRANSIT_OUT;
 	static struct keyrepeat runopts_key_repeat;
 	static Uint32 runopts_colours_emu_fg;
@@ -3253,7 +3254,6 @@ void runopts_transit(int state) {
 	}
 
 	last_state = state;
-#endif
 }
 
 /***************************************************************************
@@ -3290,8 +3290,6 @@ void runopts_transit(int state) {
  */
 
 void key_repeat_manager(int funcid, SDL_Event *event, int eventid) {
-#ifndef ZXPICO
-// TO DO PICO: Will need to either remove or define SDL_Event
 	static int interval = 0, last_eventid = 0, init = TRUE;
 	static SDL_Event repeatevent;
 		
@@ -3325,7 +3323,6 @@ void key_repeat_manager(int funcid, SDL_Event *event, int eventid) {
 			key_repeat_manager(KRM_FUNC_RELEASE, NULL, eventid);
 		repeatevent = *event;
 	}
-#endif
 }
 
 /***************************************************************************
@@ -3342,7 +3339,6 @@ void key_repeat_manager(int funcid, SDL_Event *event, int eventid) {
  *           exclude1 and/or exclude2 can be used to exclude controls */
 
 void keyboard_buffer_reset(int shift_reset, int exclude1, int exclude2) {
-#ifndef ZXPICO
 	int keycode;
 
 	for (keycode = 0; keycode < MAX_KEYCODES; keycode++) {
@@ -3351,7 +3347,6 @@ void keyboard_buffer_reset(int shift_reset, int exclude1, int exclude2) {
 			!(exclude2 && keycode == exclude2)))
 			keyboard_buffer[keycode] = SDL_RELEASED;
 	}
-#endif
 }
 
 /***************************************************************************
@@ -3408,6 +3403,7 @@ char *keycode_to_keysym(int keycode) {
 	return nullstring;
 }
 
+#endif
 
 
 

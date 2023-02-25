@@ -80,6 +80,7 @@ int sdl_init(void) {
 	 * exit prematurely and we don't want to cause seg faults by
 	 * freeing nothing. As long as they are NULL everything is fine */
 	sdl_emulator.timer_id = NULL;
+#ifndef ZXPICO
 	control_bar.scaled = NULL;
 	vkeyb.zx80original = vkeyb.zx81original = vkeyb.scaled = NULL;
 	sz81icons.original = sz81icons.scaled = NULL;
@@ -90,6 +91,7 @@ int sdl_init(void) {
 	joystick = NULL;
 	wm_icon = NULL;
 
+#endif
 	/* Initialise everything to a default here that could possibly be
 	 * overridden by a command line option or from an rcfile */
 	joystick_dead_zone = JOYSTICK_DEAD_ZONE;
@@ -115,6 +117,7 @@ int sdl_init(void) {
 	sdl_sound.device = DEVICE_NONE;
 	sdl_sound.stereo = TRUE;
 	sdl_sound.ay_unreal = FALSE;
+#ifndef ZXPICO
 	vkeyb.alpha = SDL_ALPHA_OPAQUE;
 	vkeyb.autohide = FALSE;
 	vkeyb.toggle_shift = FALSE;
@@ -134,6 +137,7 @@ int sdl_init(void) {
 	colours.hs_ctb_pressed = 0xffc000;
 	colours.hs_options_selected = 0x00ff00;
 	colours.hs_options_pressed = 0xffc000;
+#endif
 	sdl_com_line.nxtlin = UNDEFINED;
 	sdl_com_line.load_hook = UNDEFINED;
 	sdl_com_line.save_hook = UNDEFINED;
@@ -156,9 +160,11 @@ int sdl_init(void) {
 	sdl_emulator.paused = FALSE;
 	sdl_sound.state = FALSE;
 	video.redraw = TRUE;
+#ifndef ZXPICO
 	vkeyb.state = FALSE;
 	ctrl_remapper.state = FALSE;
 	joy_cfg.state = FALSE;
+#endif
 	rcfile.rewrite = FALSE;
 	sdl_zx80rom.state = FALSE;
 	sdl_zx81rom.state = FALSE;
@@ -173,6 +179,7 @@ int sdl_init(void) {
 	show_input_id = FALSE;
 	current_input_id = UNDEFINED;
 	strcpy(startdir, ""); getcwd(startdir, 256); startdir[255] = 0;
+#ifndef ZXPICO
 	load_file_dialog.state = FALSE;
 	strcpy(load_file_dialog.dir, startdir);
 	load_file_dialog.dirlist = NULL;
@@ -186,7 +193,6 @@ int sdl_init(void) {
 	dialog.title = "";	/* strlen doesn't like NULLs ;) */
 	dialog.text[0] = NULL;
 
-#ifndef ZXPICO
 	/* Initialise SDL */
 	if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)) {
 		fprintf(stderr, "%s: Cannot initialise SDL: %s", __func__,
@@ -366,8 +372,8 @@ int sdl_com_line_process(int argc, char *argv[]) {
  * needs to be done as a result of a state change then it is managed from
  * here to keep things organised and to cut down on code duplication */
 
-void sdl_component_executive(void) {
 #ifndef ZXPICO
+void sdl_component_executive(void) {
 	static int active_components = 0;
 	static int ctrl_remapper_state = FALSE;
 	static int sdl_emulator_model = 0;
@@ -605,7 +611,6 @@ void sdl_component_executive(void) {
 	if (save_state_dialog.state) active_components |= COMP_SSTATE;
 	if (dialog.state) active_components |= COMP_DIALOG;
 
-#endif
 }
 
 /***************************************************************************
@@ -623,7 +628,6 @@ void sdl_component_executive(void) {
 int get_active_component(void) {
 	int retval;
 
-#ifndef ZXPICO
 	if (dialog.state) {
 		retval = COMP_DIALOG;
 	} else if (runtime_options_which() < MAX_RUNTIME_OPTIONS) {
@@ -642,10 +646,6 @@ int get_active_component(void) {
 		retval = 0;
 	}
 
-#else
-	// TO DO PICO: Check
-	retval = 0;
-#endif
 	return retval;
 }
 
@@ -659,16 +659,12 @@ int get_active_component(void) {
 int runtime_options_which(void) {
 	int count;
 	
-#ifndef ZXPICO
 	for (count = 0; count < MAX_RUNTIME_OPTIONS; count++)
 		if (runtime_options[count].state) break;
 	
-#else
-	// TO DO PICO: Check
-	count = MAX_RUNTIME_OPTIONS;
-#endif
 	return count;
 }
+#endif
 
 /***************************************************************************
  * Timer Initialise                                                        *
