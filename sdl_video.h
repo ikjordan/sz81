@@ -32,7 +32,9 @@ extern char *runtime_options_text2[24];
 extern char *runtime_options_text3[24];
 
 typedef struct video_options {
+#ifndef ZXPICO
 	SDL_Surface *screen;
+#endif
 	int bigscreen;
 	int fullscreen;		        /* 0 or SDL_FULLSCREEN */
 	int scale;			/* 1, 2 or 3 */
@@ -43,6 +45,7 @@ typedef struct video_options {
 
 extern video_ video;
 
+#ifndef ZXPICO
 /* Function prototypes */
 SDL_Surface *BMF_RenderText(int font, char *text, Uint32 fg_colour, Uint32 bg_colour);
 Uint32 get_pixel(SDL_Surface *surface, int x, int y);
@@ -54,6 +57,7 @@ Uint32 adjust_colour_component(Uint32 rgb, Uint32 mask, int amount, int granulat
 void set_joy_cfg_text(int textid);
 void save_screenshot(void);
 
+#endif
 
 
 
