@@ -43,8 +43,6 @@ typedef uint16_t Uint16;
 typedef uint8_t Uint8;
 
 // Temp defines
-//typedef uint32_t SDL_Surface;
-//typedef uint32_t SDL_Rect;
 typedef void* SDL_TimerID;
 
 #define SDL_FULLSCREEN 1
