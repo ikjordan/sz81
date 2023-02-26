@@ -21,9 +21,7 @@ set(ZX81_SOURCES
 	common.c
 	sound.c
 	zx81config.c
-	#w5100.c
 	sdl_engine.c
-	#sdl_hotspots.c
 	sdl_input.c
 	sdl_loadsave.c
 	sdl_resources.c
@@ -32,6 +30,10 @@ set(ZX81_SOURCES
 	z80/z80.c
 	z80/z80_ops.c
 	zx81.c
+	)
+set(NONZXPICO_SOURCES
+	w5100.c
+	sdl_hotspots.c
 	dissz80.c
 	tables.c
 	noscript.c
@@ -53,6 +55,9 @@ message(VERSION="${VERSION}")
 add_executable(${PROJECT})
 
 target_sources(${PROJECT} PRIVATE ${ZX81_SOURCES})
+if (NOT PICOZX)
+target_sources(${PROJECT} PRIVATE ${NONZXPICO_SOURCES})
+endif()
 if (SUPPORT_SOUND)
 target_sources(${PROJECT} PRIVATE ${SOUND_SOURCES})
 endif()

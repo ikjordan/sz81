@@ -257,6 +257,7 @@ void aszmic7hacks();
 void kcomm(int a);
 unsigned char lcomm(int a1, int a2);
 
+#ifndef ZXPICO
 void disassemble(const unsigned int dAddr, const BYTE opcode)
 {
         DISZ80  *d;                     /* Pointer to the Disassembly structure */
@@ -311,6 +312,7 @@ void disassemble(const unsigned int dAddr, const BYTE opcode)
 #endif
         free(d);
 }
+#endif
 
 /* EightyOne  - A Windows ZX80/81/clone emulator.
  * Copyright (C) 2003-2006 Michael D Wynne
@@ -959,8 +961,10 @@ BYTE zx81_opcode_fetch(int Address)
 	  disassemble(Address, opcode);
 #endif
 
+#ifndef ZXPICO
 	if (Address>=sdl_emulator.bdis && Address<=sdl_emulator.edis && ffetch)
 	        disassemble(Address, opcode);
+#endif
 	ffetch = 0;
 
 	return opcode;
