@@ -1023,7 +1023,7 @@ int keyboard_update(void) {
 								(1 - axis_end) + SDL_JoystickNumButtons (joystick);
 							virtualevent.type = SDL_JOYBUTTONUP;
 							virtualevent.jbutton.state = SDL_RELEASED;
-			:				SDL_PushEvent(&virtualevent);
+							SDL_PushEvent(&virtualevent);
 
 							/* Record its SDL_RELEASED state within axisstates */
 							axisstates[event.jaxis.axis * 2 + (1 - axis_end)] = SDL_RELEASED;
