@@ -34,6 +34,10 @@
 	#include "amiga.h"
 #endif
 
+#ifdef ZXPICO
+#include "../src/emuapi.h"
+#include "tusb.h"
+#endif
 #ifdef APU
 void am_reset();
 #endif
@@ -63,6 +67,7 @@ int keyboard_buffer[MAX_KEYCODES];
 /* redraw the screen */
 
 void update_scrn(void) {
+#ifndef ZXPICO
 	unsigned char *ptr, *optr, *cptr, d, dc;
 	int x, y, a, mask;
 
@@ -70,20 +75,16 @@ void update_scrn(void) {
 		ptr = scrnbmp + (y + ZX_VID_X_YOFS) * 
 			ZX_VID_FULLWIDTH / 8 + ZX_VID_X_XOFS / 8;
 		optr = scrnbmp_old + (ptr - scrnbmp);
-#ifndef ZXPICO
 		cptr = scrnbmpc + (y + ZX_VID_X_YOFS) * 
 			ZX_VID_FULLWIDTH + ZX_VID_X_XOFS;
-#endif
 		for (x = 0; x < ZX_VID_X_WIDTH; x += 8, ptr++, optr++) {
 			d = *ptr;
 			if (d != *optr || refresh_screen || chromamode) {
 				if (sdl_emulator.invert) d = ~d;
 				for (a = 0, mask = 128; a < 8; a++, mask >>= 1) {
-#ifndef ZXPICO
 					if (chromamode) {
 						vptr[y * 400 + x + a] = dc = *(cptr++);
 					} else
-#endif
 					{
 						vptr[y * 400 + x + a] = ((d&mask) ? 0 : 15);
 					}
@@ -96,10 +97,12 @@ void update_scrn(void) {
 	memcpy(scrnbmp_old, scrnbmp, ZX_VID_FULLHEIGHT * ZX_VID_FULLWIDTH / 8);
 
 	refresh_screen = 0;
-#ifndef ZXPICO
 	sdl_video_update();
 #else
 	// TO DO PICO: Add update
+	refresh_screen = 0;
+	tuh_task();
+	emu_DisplayFrame(scrnbmp, 0);
 #endif
 }
 
@@ -200,6 +203,7 @@ void check_events(void) {
 	extern "C"
 #endif
 
+#ifndef ZXPICO
 int main(int argc, char *argv[]) {
 	int retval = 0;
 
@@ -238,22 +242,18 @@ int main(int argc, char *argv[]) {
 				 * variables that are defined within it */
 				sdl_rcfile_read();
 
-#ifndef ZXPICO
 				/* Initialise the hotspots now (this will set the
 				 * default initial vkeyb hotspot for the model) */
 				sdl_hotspots_init();
 
-#endif
 				/* Load both the ZX80 and ZX81 ROMs */
 				sdl_zxroms_init();
 
 				/* Initialise the emulator timer */
 				sdl_timer_init();
 
-#ifndef ZXPICO
 				/* Synchronise */
 				sdl_component_executive();
-#endif
 				
 				while (interrupted != INTERRUPT_EMULATOR_EXIT) {
 
@@ -317,4 +317,92 @@ int main(int argc, char *argv[]) {
 
 	return retval;
 }
+#else
+void szRun(const char * filename)
+{
+	int retval = 0;
 
+	/* Initialise sz81 variables, SDL, WM icon, local data dir */
+	retval = sdl_init();
+	if (!retval) {
+		/* sz81 supports just the necessary options via the CLI, such
+		 * as an initial video resolution and window/fullscreen */
+		retval = sdl_com_line_process(0, NULL);
+		if (!retval) {
+			strcpy(sdl_com_line.filename, filename);
+
+			/* I personally like to dump this about here so that if
+			 * something goes wrong then it's clear to the user where
+			 * everything is supposed to be */
+			fprintf(stdout, "PACKAGE_DATA_DIR is %s\n", PACKAGE_DATA_DIR);
+
+			/* Set the video mode, set-up component screen offsets,
+			 * initialise fonts, icons, vkeyb and control bar */
+			retval = sdl_video_setmode();
+			if (!retval) {
+
+				/* Initialise the keyboard buffer, open a joystick
+				 * and set-up control remappings */
+				sdl_keyboard_init();
+
+				/* Read the project's rcfile if it exists and update
+				 * variables that are defined within it */
+				sdl_rcfile_read();
+
+				/* Load both the ZX80 and ZX81 ROMs */
+				sdl_zxroms_init();
+
+				/* Initialise the emulator timer */
+				sdl_timer_init();
+
+				while (interrupted != INTERRUPT_EMULATOR_EXIT) {
+
+					interrupted = 0;
+
+					/* Initialise printer variables */
+					zxpinit();
+
+					/* Initialise the printer file */
+					sdl_zxprinter_init();
+
+					/* Initialise the ZX80 or ZX81 */
+					zx81_initialise();
+
+					/* Initialise the required ROM and RAM */
+					initmem();
+
+					#ifdef OSS_SOUND_SUPPORT
+						/* z81 has a variable 'sound' that is set to true
+						 * if the user requests sound else false. At this
+						 * point if 'sound' is true then the sound system is
+						 * initialised which should result in sound_enabled=1.
+						 * Henceforth the 'sound' variable is ignored and
+						 * sound_enabled is used to check the sound state */
+						if (sound) sound_init();
+					#endif
+
+					/* And off we go... */
+					mainloop();
+
+					#ifdef OSS_SOUND_SUPPORT
+						/* If sound_enabled=1 then sound is operational */
+						if (sound_enabled) {
+							sound_end();
+							sound_reset();
+						}
+					#endif
+
+					/* Close any open printer file */
+					zxpclose();
+
+					/* Reinitialise variables at the top of z80.c */
+					z80_reset();
+
+					/* Reinitialise variables at the top of common.c */
+					common_reset();
+				}
+			}
+		}
+	}
+}
+#endif

@@ -27,6 +27,8 @@ bmpfont_ zx80font, zx81font, zx82font;
 sz81icons_ sz81icons;
 vkeyb_ vkeyb;
 control_bar_ control_bar;
+#else
+#include "../src/emuapi.h"
 #endif
 rcfile_ rcfile;
 
@@ -1432,7 +1434,11 @@ int sdl_zxroms_init(void) {
 	int retval = FALSE;
 	char filename[256];
 	int count;
+#ifndef ZXPICO
 	FILE *fp;
+#else
+	int fp;
+#endif
 
 	for (count = 0; count < 3; count++) {
 		if ((count == 0 && !sdl_zx80rom.state) || 
@@ -1453,7 +1459,12 @@ int sdl_zxroms_init(void) {
 				strcat(filename, ASZMIC);
 			}
 			/* Open the ROM */
-			if ((fp = fopen(filename, "rb")) == NULL) {
+#ifndef ZXPICO
+			if ((fp = fopen(filename, "rb")) == NULL)
+#else
+			if ((fp = emu_FileOpen(filename, "rb")) == 0)
+#endif
+			{
 				fprintf(stderr, "%s: Cannot read from %s\n", __func__, filename);
 				if (count < 2) retval = TRUE;
 			} else {
@@ -1466,17 +1477,19 @@ int sdl_zxroms_init(void) {
 				} else if (count == 2) {
 					sdl_aszmicrom.state = fread(sdl_aszmicrom.data, 1, 4 * 1024, fp);
 				}
+
+				fclose(fp);
 #else
 				/* Read in the data, max. 64k */
 				if (count == 0) {
-					sdl_zx80rom.state = fread(sdl_zx80rom.data, 1, 4 * 1024, fp);
+					sdl_zx80rom.state = emu_FileRead(sdl_zx80rom.data, 4 * 1024, fp);
 				} else if (count == 1) {
-					sdl_zx81rom.state = fread(sdl_zx81rom.data, 1, 8 * 1024, fp);
+					sdl_zx81rom.state = emu_FileRead(sdl_zx81rom.data, 8 * 1024, fp);
 				} else if (count == 2) {
-					sdl_aszmicrom.state = fread(sdl_aszmicrom.data, 1, 4 * 1024, fp);
+					sdl_aszmicrom.state = emu_FileRead(sdl_aszmicrom.data, 4 * 1024, fp);
 				}
+				emu_FileClose(fp);
 #endif
-				fclose(fp);
 			}
 		}
 	}

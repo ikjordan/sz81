@@ -358,8 +358,8 @@ void Plot(int c)
 	if (c&0x01) b |= m; else b &= ~m;
 #ifndef ZXPICO
 	if (zx81.colour!=COLOURDISABLED) scrnbmpc_new[k] = c >> 4;
-	scrnbmp_new[kh] = b;
 #endif
+	scrnbmp_new[kh] = b;
 }
 
 int myrandom( int x )

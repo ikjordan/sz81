@@ -6,3 +6,6 @@ extern void exit_program(void);
 #endif
 extern void update_scrn(void);
 extern void check_events(void);
+#ifdef ZXPICO
+extern void szRun(const char * filename);
+#endif
