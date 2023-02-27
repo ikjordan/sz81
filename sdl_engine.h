@@ -18,7 +18,9 @@
 /* Includes */
 #include <sys/stat.h>
 #include <ctype.h>	/* Needed for toupper() only */
+#ifdef USE_DIRS
 #include <dirent.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

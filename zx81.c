@@ -17,7 +17,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef USE_DIRS
 #include <dirent.h>
+#endif
 
 #define LASTINSTNONE  0
 #define LASTINSTINFE  1

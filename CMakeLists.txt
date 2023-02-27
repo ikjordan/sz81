@@ -1,17 +1,28 @@
 # A very simple CMake for testing
 set(PROJECT picozx81)
 cmake_minimum_required(VERSION 3.13)
+OPTION(BUILD_PICO "Set to true to build using pico sdk" ON)
+
+if (BUILD_PICO)
+	include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+	include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
+endif()
 
 project(${PROJECT} C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(SDL REQUIRED)
+if (BUILD_PICO)
+	# Initialize the Pico SDK
+	pico_sdk_init()
+else()
+	find_package(SDL REQUIRED)
+	message(SDL_INCLUDE_DIR "${SDL_INCLUDE_DIR}")
+	include_directories(${SDL_INCLUDE_DIR})
+endif()
 
-message(SDL_INCLUDE_DIR "${SDL_INCLUDE_DIR}")
 include_directories(z80)
-include_directories(${SDL_INCLUDE_DIR})
 
 OPTION(SUPPORT_SOUND "Set to true to support sound" OFF)
 OPTION(PICOZX "Set to true for reduced version" ON)
@@ -70,7 +81,11 @@ if (PICOZX)
 target_compile_definitions(${PROJECT} PRIVATE -DZXPICO)
 endif()
 
+if (PICOZX)
+target_link_libraries(${PROJECT} pico_stdlib)
+else()
 target_link_libraries(${PROJECT} ${SDL_LIBRARY} -lrt)
+endif()
 if (SUPPORT_SOUND)
 target_compile_definitions(${PROJECT} PRIVATE -DOSS_SOUND_SUPPORT -DUSE_SND_EXTERNAL_BUFFER)
 endif()

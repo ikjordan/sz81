@@ -22,7 +22,9 @@
 #endif
 #include "zx81.h"
 #ifndef Win32
+#ifndef ZXPICO
 #include <sys/ioctl.h>
+#endif
 #endif
 
 /* Defines */
@@ -178,8 +180,8 @@ int sdl_init(void) {
 	runtime_options[3].text = runtime_options_text3;
 	show_input_id = FALSE;
 	current_input_id = UNDEFINED;
-	strcpy(startdir, ""); getcwd(startdir, 256); startdir[255] = 0;
 #ifndef ZXPICO
+	strcpy(startdir, ""); getcwd(startdir, 256); startdir[255] = 0;
 	load_file_dialog.state = FALSE;
 	strcpy(load_file_dialog.dir, startdir);
 	load_file_dialog.dirlist = NULL;
@@ -675,7 +677,7 @@ void sdl_timer_init(void) {
 	/* Create a 10ms timer */
 	sdl_emulator.timer_id = SDL_AddTimer (10, emulator_timer, NULL);
 #else
-	// TO DO PICO: Add repating timer
+	// TO DO PICO: Create 50Hz timer
 #endif
 }
 

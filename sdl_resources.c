@@ -115,6 +115,7 @@ void sdl_zxprinter_init(void) {
  * accommodate the various sz81-created files */
 
 void local_data_dir_init(void) {
+#ifdef USE_DIRS
 	char foldername[256];
 	int count;
 	
@@ -146,6 +147,7 @@ void local_data_dir_init(void) {
 		mkdir(foldername);
 #endif
 	}
+#endif
 }
 
 /***************************************************************************

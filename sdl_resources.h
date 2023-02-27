@@ -25,7 +25,11 @@
 #elif defined(PLATFORM_GP2X) || defined(_WIN32)
 	#define LOCAL_DATA_DIR "local"
 #else
+#ifndef ZXPICO
 	#define LOCAL_DATA_DIR ".sz81"
+#else
+	#define LOCAL_DATA_DIR "z81"
+#endif
 #endif
 #if defined(_WIN32)
 	#define RESOURCE_FILE "sz81.ini"

@@ -73,6 +73,7 @@ void load_file_dialog_dirlist_populate(int refresh) {
 		filetypes = DIRLIST_FILETYPE_ZX81;
 	}
 
+#ifndef ZXPICO
 	/* Repopulate the load file dialog's directory list */
 	dirlist_populate(load_file_dialog.dir,
 		&load_file_dialog.dirlist, &load_file_dialog.dirlist_sizeof,
@@ -83,6 +84,7 @@ void load_file_dialog_dirlist_populate(int refresh) {
 		load_file_dialog.dirlist_top = 0;
 		load_file_dialog.dirlist_selected = 0;
 	}
+#endif
 }
 
 /***************************************************************************
@@ -949,6 +951,7 @@ void file_dialog_cd(char *dir, char *direntry) {
 	}
 }
 
+#ifdef USE_DIRS
 /***************************************************************************
  * Directory List Populate                                                 *
  ***************************************************************************/
@@ -1130,6 +1133,7 @@ void dirlist_populate(char *dir, char **dirlist, int *dirlist_sizeof,
 	/* Restore the current working directory */
 	chdir(cwd);
 }
+#endif
 
 /***************************************************************************
  * File Type Case Insensitive Compare                                      *
@@ -1343,6 +1347,7 @@ void fread_unsigned_long_little_endian(unsigned long *target, FILE *fp) {
  *           or 0 on opendir error */
 
 int get_filename_next_highest(char *dir, char *format) {
+#ifdef USE_DIRS
 	struct dirent *direntry;
 	int retval = 1, value;
 	DIR *dirstream;
@@ -1359,7 +1364,12 @@ int get_filename_next_highest(char *dir, char *format) {
 			dir);
 	}
 
+#else
+	int retval = 1;
+	// TO DO PICO: attempt to open each file
 	return retval;
+#endif
 }
+
 
 

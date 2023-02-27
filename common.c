@@ -44,9 +44,11 @@ extern void sdl_set_redraw_video();
 #ifndef Win32
 #include <unistd.h>
 #include <sys/types.h>
+#ifndef ZXPICO
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#endif
 #endif
 
 #include "common.h"
@@ -1561,8 +1563,7 @@ if(sound_enabled)
 #ifndef ZXPICO
 while(!signal_int_flag) SDL_Delay(10);
 #else
-while(!signal_int_flag) usleep(10);
-// TO DO PICO:
+// TO DO PICO: Block when passing video buffer
 #endif
 #else
 /* we leave it blocked most of the time, only unblocking
