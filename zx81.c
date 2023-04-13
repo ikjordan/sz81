@@ -87,32 +87,7 @@ int hsync_counter=0;
 int ispeedup;
 int ffetch;
 
-/* ZXmore stuff */
-
-int zxmspeed=1;
-int zxmoff=0;
-int zxmnmicounter=0;
-int zxmnmi=0;
-int zxmfetching=0;
-int zxmroml=0x3f, zxmraml=0xf3;
-int zxmvideo=0;
-int zxmrowcounter=0;
-unsigned int zxmoffset=0;
-
-int zxmflash=0, zxmmod=0;
-
 extern void loadrombank(int offset);
-
-void zxm_writebyte(int Address, int Data)
-{
-	memory[Address] = Data;
-}
-
-BYTE zxm_readbyte(int Address)
-{
-	return memory[Address];
-}
-
 
 /* in common.c */
 void aszmic4hacks();
@@ -377,17 +352,11 @@ int zx81_contend(int Address, int states, int time)
 
 void zx81_writebyte(int Address, int Data)
 {
-#ifdef VISUALS
-	if (Address>=0x8000 && !(Data&64) && !NMI_generator) {
-		shift_register |= Data;
-	}
-#endif
 	if (zx81.aytype == AY_TYPE_QUICKSILVA)
 	{
 		if (Address == 0x7fff) SelectAYReg=Data&15;
 		if (Address == 0x7ffe) sound_ay_write(SelectAYReg,Data,0);
 	}
-
 
 	if (zx81.chrgen==CHRGENQS && Address>=0x8400 && Address<=0x87ff)
 	{
@@ -397,47 +366,24 @@ void zx81_writebyte(int Address, int Data)
 
 	if (Address>zx81.RAMTOP)
 	{
-		if (Address==0x8003)
-		{
-			if (Data==0x80 && sdl_aszmicrom.state)
-			{
-				memcpy(mem,sdl_aszmicrom.data,4096);
-				printf("Going to ASZMIC version %d...\n",mem[0x16]);
-				if (mem[0x16]==0x07) aszmic7hacks(); else aszmic4hacks();
-				memcpy(mem+4096,mem,4096);
-			} else if (Data==0x0f) {
-				printf("Going to BASIC...\n");
-				memcpy(mem,sdl_zx81rom.data,8192);
-			}
-		}
 		if (zx81.RAMTOP==0xbfff) Address &= 0x7fff;
 		else Address = (Address&(zx81.RAMTOP));
 	}
 
 	if (Address>8191 && Address<16384 && zx81.shadowROM && zx81.protectROM) return;
-	if (Address<10240 && zx81.truehires==HIRESMEMOTECH) return;
-	if (Address>=10240 && Address<12288 && zx81.truehires==HIRESG007) return;
 
-	if (zx81.wsz81mem && Address>=0x4000 && Address<0x8000) sz81mem[Address-0x4000]=Data;
-        zxm_writebyte(Address,Data);
+	// Finally write!
+	memory[Address] = Data;
 }
 
 BYTE zx81_readbyte(int Address)
 {
 	int data;
 
-	if (zx81.rsz81mem && Address>=0xc000) return sz81mem[Address-0xc000];
+	if (Address<=zx81.RAMTOP) data=memory[Address];
+	else if (zx81.RAMTOP==0xbfff) data=memory[Address&0x7fff];
+	else data=memory[Address&zx81.RAMTOP];
 
-	if (Address<=zx81.RAMTOP) data=zxm_readbyte(Address);
-	else if (zx81.RAMTOP==0xbfff) data=zxm_readbyte(Address&0x7fff);
-	else data=zxm_readbyte(Address&zx81.RAMTOP);
-
-#ifdef VISUALS
-	if (Address>=0x8000 && !(data&64) && !NMI_generator)
-	{
-		shift_register |= data;
-	}
-#endif
 	return(data);
 }
 
@@ -471,10 +417,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 	if (Address<zx81.m1not)
 	{
 		// This is not video related, so just return the opcode
-		// and make some noise onscreen.
-		zxmfetching = 1;
-		data = zxm_readbyte(Address);
-		zxmfetching = 0;
+		data = memory[Address];
 		return(data);
 	}
 
@@ -484,7 +427,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 	// 48-64k region if a 64k RAM Pack is used.  How does the real
 	// Hardware work?
 
-	data = zxm_readbyte((Address>=49152)?Address&32767:Address);
+	data = memory[(Address>=0xc000)?Address&0x7fff:Address];
 	opcode=data;
 	bit6=opcode&64;
 
@@ -503,7 +446,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 	// loading it into the video shift register.
 	if (z80.i>=zx81.maxireg && zx81.truehires==HIRESWRX && !bit6)
 	{
-		data=zxm_readbyte((z80.i<<8) | (z80.r7 & 128) | ((z80.r-1) & 127));
+		data=memory[(z80.i<<8) | (z80.r7 & 128) | ((z80.r-1) & 127)];
 		update=1;
 	}
 	else if (!bit6)
@@ -516,8 +459,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 		// to use if CHR$x16 is in use.  Else, standard ZX81
 		// character sets are only 64 characters in size.
 
-		if ((zx81.chrgen==CHRGENCHR16 && (z80.i&1))
-		 || (zx81.chrgen==CHRGENQS && zx81.enableqschrgen))
+		if (zx81.chrgen==CHRGENQS && zx81.enableqschrgen)
 			data = ((data&128)>>1)|(data&63);
 		else data = data&63;
 
@@ -530,14 +472,17 @@ BYTE zx81_opcode_fetch_org(int Address)
 		// Otherwise, we can't get a bitmap from anywhere, so
 		// display 11111111 (??What does a real ZX81 do?).
 
-		if (z80.i<64 || (z80.i>=128 && z80.i<192 && zx81.chrgen==CHRGENCHR16))
+		if (z80.i<64)
 		{
-				if ((zx81.extfont && z80.i<32) || (zx81.chrgen==CHRGENQS && zx81.enableqschrgen))
-						data=font[(data<<3) + rowcounter];
-				else    data=zxm_readbyte((((z80.i&254)<<8) + (data<<3)) + rowcounter);
+			if (zx81.chrgen==CHRGENQS && zx81.enableqschrgen)
+				data=font[(data<<3) + rowcounter];
+			else
+				data=memory[(((z80.i&254)<<8) + (data<<3)) + rowcounter];
 		}
-		else data=255;
-
+		else
+		{
+			data=255;
+		}
 		update=1;
     }
 
@@ -548,7 +493,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 		// an opcode with bit 6 set above M1NOT.
 
 		// Finally load the bitmap we retrieved into the video shift
-		// register, remembering to make some video noise too.
+		// register
 
 		shift_register |= data;
 		shift_reg_inv |= inv? 255:0;
@@ -558,7 +503,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 	{
 		// This is the fallthrough for when we found an opcode with
 		// bit 6 set in the display file.  We actually execute these
-		// opcodes, and generate the noise.
+		// opcodes
 		return(opcode);
 	}
 }
@@ -620,13 +565,13 @@ void zx81_writeport(int Address, int Data, int *tstates)
 		break;
 
         case 0xff: // default out handled below
-	        break;
+	    break;
 
         default:
 		//		printf("Unhandled port write: %d\n", Address);
         break;
 	}
-	if (!LastInstruction) LastInstruction=LASTINSTOUTFF;
+	if (LastInstruction == LASTINSTNONE) LastInstruction=LASTINSTOUTFF;
 }
 
 
@@ -790,12 +735,7 @@ int zx81_do_scanlines(int tstotal)
 
 		if (nmi_pending)
 		{
-			if (zxmnmicounter > 0) zxmnmicounter--;
-			if (zxmnmicounter == 0)
-			{
-				if (!zxmoff) zxmnmi = 1;
-				ts = z80_nmi(0);
-			}
+			ts = z80_nmi(0);
 		}
 
 		LastInstruction = LASTINSTNONE;
@@ -824,7 +764,10 @@ int zx81_do_scanlines(int tstotal)
 				anyout();
 			break;
 			case LASTINSTOUTFE:
-				if (zx81.machine!=MACHINEZX80) { NMI_generator=1; zxmnmicounter=0; }
+				if (zx81.machine!=MACHINEZX80)
+				{
+					NMI_generator=1;
+				}
 				anyout();
 			break;
 			case LASTINSTINFE:
@@ -848,6 +791,14 @@ int zx81_do_scanlines(int tstotal)
 		/* do what happened during the last instruction */
 		for (istate=0, ipixel=0; istate<ts; istate++)
 		{
+			int k, kh, kl;
+			unsigned char b, m;
+
+			k = TVP + dest + RasterX;
+			kh = k >> 3;
+			kl = k & 7;
+			b = scrnbmp_new[kh];
+
 			/* draw two pixels for this tstate */
 			for (i=0; i<2; i++, ipixel++)
 			{
@@ -870,11 +821,20 @@ int zx81_do_scanlines(int tstotal)
 				shift_register<<=1;
 				shift_reg_inv<<=1;
 
-				Plot(colour);
+				RasterX++;
+
+				if ((RasterX < ZX_VID_FULLWIDTH) &&
+				    (k < ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT))
+				{
+					m = 0x80 >> kl;
+					if (colour&0x01) b |= m; else b &= ~m;
+					kl++;
+				}
 			}
+			scrnbmp_new[kh] = b;
 
 			hsync_counter++;
-			if (hsync_counter >= machine.tperscanline*(zxmvideo?1:zxmspeed))
+			if (hsync_counter >= machine.tperscanline)
 			{
 				hsync_counter = 0;
 				if (zx81.machine!=MACHINEZX80) hsync_pending = 1;
