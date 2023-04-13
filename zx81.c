@@ -461,7 +461,8 @@ BYTE zx81_opcode_fetch_org(int Address)
 
 		if (zx81.chrgen==CHRGENQS && zx81.enableqschrgen)
 			data = ((data&128)>>1)|(data&63);
-		else data = data&63;
+		else
+			data = data&63;
 
 		// If I points to ROM, OR I points to the 8-16k region for
 		// CHR$x16, we'll fetch the bitmap from there.
@@ -715,7 +716,7 @@ void anyout()
 int zx81_do_scanlines(int tstotal)
 {
     int ts;
-	int i, ipixel, istate;
+	int i, istate;
 	int tswait;
 
 	do
@@ -789,7 +790,13 @@ int zx81_do_scanlines(int tstotal)
 		}
 
 		/* do what happened during the last instruction */
-		for (istate=0, ipixel=0; istate<ts; istate++)
+
+		/* Can write 8 bits out, rest will be white
+		   1. Check if shift reg is non zero
+		   2. If so write whole byte (as cannot have less than 4 tstates)
+		   3. RasterX will be incremented elsewhere */
+		int saveRaster = RasterX;
+		for (istate=0; istate<ts; istate++)
 		{
 			int k, kh, kl;
 			unsigned char b, m;
@@ -800,7 +807,7 @@ int zx81_do_scanlines(int tstotal)
 			b = scrnbmp_new[kh];
 
 			/* draw two pixels for this tstate */
-			for (i=0; i<2; i++, ipixel++)
+			for (i=0; i<2; i++)
 			{
 				int colour, bit;
 
@@ -832,8 +839,16 @@ int zx81_do_scanlines(int tstotal)
 				}
 			}
 			scrnbmp_new[kh] = b;
+		}
+		RasterX = saveRaster;
 
+		/* Should be able to do this for an entire instruction alternatively
+		   may want to iterate with larger step size (say 12?) */
+		for (istate=0; istate<ts; istate++)
+		{
 			hsync_counter++;
+			RasterX += 2;
+
 			if (hsync_counter >= machine.tperscanline)
 			{
 				hsync_counter = 0;
@@ -875,7 +890,6 @@ int zx81_do_scanlines(int tstotal)
 			// NOR the vertical and horizontal SYNC states to create the SYNC signal
 			SYNC_signal = (VSYNC_state || HSYNC_state) ? 0 : 1;
 			checksync();
-
 		}
 
 		tstotal -= ts;
