@@ -80,7 +80,7 @@ int psync, sync_len;
 int setborder=0;
 int LastInstruction;
 int MemotechMode=0;
-int shift_register, shift_reg_inv;
+BYTE shift_register, shift_reg_inv;
 int rowcounter=0;
 int zx81_stop=0;
 int hsync_counter=0;
@@ -496,8 +496,8 @@ BYTE zx81_opcode_fetch_org(int Address)
 		// Finally load the bitmap we retrieved into the video shift
 		// register
 
-		shift_register |= data;
-		shift_reg_inv |= inv? 255:0;
+		shift_register = data;
+		shift_reg_inv = inv? 255:0;
 		return(0);
 	}
 	else
@@ -676,6 +676,7 @@ void checkvsync(int tolchk)
 		dest = 0;
 
 		memcpy(scrnbmp,scrnbmp_new,sizeof(scrnbmp));
+		memset(scrnbmp_new, 0, ZX_VID_FULLHEIGHT * ZX_VID_FULLWIDTH / 8);
 	}
 }
 
@@ -790,9 +791,34 @@ int zx81_do_scanlines(int tstotal)
 		}
 
 		/* do what happened during the last instruction */
+		if (SYNC_signal)
+		{
+			int k = TVP + dest + RasterX;
+			BYTE v = (shift_reg_inv)?~shift_register:shift_register;
 
+			if ((RasterX < ZX_VID_FULLWIDTH) &&
+				(k < ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT) && v)
+			{
+				int kh = k >> 3;
+				int kl = k & 7;
+
+				if (kl)
+				{
+					scrnbmp_new[kh++]|=(v>>kl);
+					scrnbmp_new[kh]=(v<<(8-kl));
+				}
+				else
+				{
+					scrnbmp_new[kh]=v;
+				}
+			}
+		}
+		shift_register = 0;
+		shift_reg_inv = 0;
+
+#if 0
 		/* Can write 8 bits out, rest will be white
-		   1. Check if shift reg is non zero
+		   1. Check if shift reg is non zero MAKE shift reg a byte rather than a word
 		   2. If so write whole byte (as cannot have less than 4 tstates)
 		   3. RasterX will be incremented elsewhere */
 		int saveRaster = RasterX;
@@ -841,7 +867,7 @@ int zx81_do_scanlines(int tstotal)
 			scrnbmp_new[kh] = b;
 		}
 		RasterX = saveRaster;
-
+#endif
 		/* Should be able to do this for an entire instruction alternatively
 		   may want to iterate with larger step size (say 12?) */
 		for (istate=0; istate<ts; istate++)
@@ -987,8 +1013,6 @@ void zx81_initialise(void)
 	VSYNC_state=HSYNC_state=0;
 	MemotechMode=0;
 	
-/* Here are some alternatives to try (no fopen fail message!) */
-
 	ink=0; paper=border=7;
 
 	z80_init();
