@@ -22,6 +22,8 @@
 #define LASTINSTOUTFD 3
 #define LASTINSTOUTFF 4
 
+//#define DEBUG_PRINT
+
 // #define VRCNTR
 
 ZX81 zx81;
@@ -65,7 +67,6 @@ const static int HSYNC_START = 16;
 const static int HSYNC_END = 32;
 
 int int_pending, nmi_pending, hsync_pending;
-int border, ink, paper;
 int SelectAYReg;
 BYTE font[512];
 int borrow=0;
@@ -97,6 +98,9 @@ void aszmic4hacks();
 void aszmic7hacks();
 void kcomm(int a);
 unsigned char lcomm(int a1, int a2);
+
+void vsync_raise(void);
+void vsync_lower(void);
 
 void disassemble(const unsigned int dAddr, const BYTE opcode)
 {
@@ -684,8 +688,17 @@ void checkvsync(int tolchk)
 		RasterY = 0;
 		dest = 0;
 
-		memcpy(scrnbmp,scrnbmp_new,sizeof(scrnbmp));
-		memset(scrnbmp_new, 0, ZX_VID_FULLHEIGHT * ZX_VID_FULLWIDTH / 8);
+		if (sync_len>tsmax)
+		{
+			// If there has been no sync for an entire frame then blank the screen
+			memset(scrnbmp, 0xff, ZX_VID_FULLHEIGHT * ZX_VID_FULLWIDTH / 8);
+			sync_len = 0;
+		}
+		else
+		{
+			memcpy(scrnbmp,scrnbmp_new,sizeof(scrnbmp));
+		}
+		memset(scrnbmp_new, 0x00, ZX_VID_FULLHEIGHT * ZX_VID_FULLWIDTH / 8);
 	}
 }
 
@@ -720,6 +733,7 @@ void anyout()
 		else
 			VSYNC_state = 0;
 		if (zx81.vsyncsound) sound_beeper(0);
+		vsync_lower();
 	}
 }
 
@@ -761,11 +775,9 @@ int zx81_do_scanlines(int tstotal)
 		tstates += ts;
 
 		/* check iff1 even though it is checked in z80_interrupt() */
-
 		if (!((z80.r-1) & 64) && z80.iff1)
 		{
 			int_pending = 1;
-			paper = border;
 		}
 
 		switch(LastInstruction)
@@ -787,6 +799,8 @@ int zx81_do_scanlines(int tstotal)
 					if (VSYNC_state==0)
 					{
 						VSYNC_state = 1;
+						vsync_raise();
+
 						if (zx81.vsyncsound) sound_beeper(1);
 					}
 				}
@@ -831,7 +845,7 @@ int zx81_do_scanlines(int tstotal)
 		int states_remaining = ts;
 		int since_hstart = 0;
 
-#ifdef DEBUG
+#ifdef DEBUG_PRINT
 		static int print_debug = 0;
 		static int dump_debug = 0;
 		static int clear_debug = 0;
@@ -897,7 +911,7 @@ int zx81_do_scanlines(int tstotal)
 			SYNC_signal = (VSYNC_state || HSYNC_state) ? 0 : 1;
 			checksync(since_hstart ? since_hstart : tstate_jump);
 			since_hstart = 0;
-#ifdef DEBUG			
+#ifdef DEBUG_PRINT
 			if (RasterY == 0)
 			{
 				if (dump_debug)
@@ -914,7 +928,8 @@ int zx81_do_scanlines(int tstotal)
 
 			if (print_debug && RasterX ==0)
 			{
-				printf("Y = %i, ts = %i, remaining %i, wait %i, hscount %i\n", RasterY, ts, states_remaining, tswait, hsync_counter);
+				printf("Y = %i, ts = %i, remaining %i, wait %i, hscount %i, sync %c\n",
+				       RasterY, ts, states_remaining, tswait, hsync_counter, SYNC_signal ? 'Y' : 'N');
 				tswait = 0;
 				if (RasterY > 0)
 					clear_debug = 1;
@@ -1017,8 +1032,6 @@ void zx81_initialise(void)
 	VSYNC_state=HSYNC_state=0;
 	MemotechMode=0;
 	
-	ink=0; paper=border=7;
-
 	z80_init();
 	z80_reset();
 }
@@ -1092,4 +1105,43 @@ void mainloop()
 #endif
 		}
 	}
+}
+
+static int vsy;
+
+void vsync_raise(void)
+{
+	/* save current pos */
+	vsy=RasterY;
+}
+
+/* for vsync on -> off */
+void vsync_lower(void)
+{
+	int ny=RasterY;
+
+	/* we don't emulate this stuff by default; if nothing else,
+	* it can be fscking annoying when you're typing in a program.
+	*/
+
+	/* even when we do emulate it, we don't bother with x timing,
+	* just the y. It gives reasonable results without being too
+	* complicated, I think.
+	*/
+	if(vsy<0) vsy=0;
+	if(vsy>=ZX_VID_FULLHEIGHT) vsy=ZX_VID_FULLHEIGHT-1;
+	if(ny<0) ny=0;
+	if(ny>=ZX_VID_FULLHEIGHT) ny=ZX_VID_FULLHEIGHT-1;
+
+	/* XXX both of these could/should be made into single memset calls */
+	if(ny<vsy)
+	{
+		/* must be wrapping around a frame edge; do bottom half */
+		for(int y=vsy;y<ZX_VID_FULLHEIGHT;y++)
+		memset(scrnbmp_new+y*(ZX_VID_FULLWIDTH>>3),0xff,ZX_VID_FULLWIDTH>>3);
+		vsy=0;
+	}
+
+	for(int y=vsy;y<ny;y++)
+		memset(scrnbmp_new+y*(ZX_VID_FULLWIDTH>>3),0xff,ZX_VID_FULLWIDTH>>3);
 }
