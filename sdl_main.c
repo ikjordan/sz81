@@ -65,10 +65,10 @@ void update_scrn(void) {
 	int x, y, a, mask;
 
 	for (y = 0; y < ZX_VID_X_HEIGHT; y++) {
-		ptr = scrnbmp + (y + ZX_VID_X_YOFS) * 
+		ptr = scrnbmp + (y + ZX_VID_X_YOFS) *
 			ZX_VID_FULLWIDTH / 8 + ZX_VID_X_XOFS / 8;
 		optr = scrnbmp_old + (ptr - scrnbmp);
-		cptr = scrnbmpc + (y + ZX_VID_X_YOFS) * 
+		cptr = scrnbmpc + (y + ZX_VID_X_YOFS) *
 			ZX_VID_FULLWIDTH + ZX_VID_X_XOFS;
 		for (x = 0; x < ZX_VID_X_WIDTH; x += 8, ptr++, optr++) {
 			d = *ptr;
@@ -78,7 +78,7 @@ void update_scrn(void) {
 					if (chromamode) {
 						vptr[y * 400 + x + a] = dc = *(cptr++);
 					} else {
-						vptr[y * 400 + x + a] = ((d&mask) ? 0 : 15);
+						vptr[(y + 8) * 400 + x -4 + a] = ((d&mask) ? 0 : 15);
 					}
 				}
 			}

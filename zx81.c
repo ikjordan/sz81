@@ -53,13 +53,16 @@ static int dest;
 #define HMAX 32
 #define VMIN 170
 
-static int HSYNC_TOLERANCEMIN = HTOLMIN;
-static int HSYNC_TOLERANCEMAX = HTOLMAX;
-static int VSYNC_TOLERANCEMIN = VTOLMIN;
-static int VSYNC_TOLERANCEMAX = VTOLMAX;
-static int HSYNC_MINLEN = HMIN;
-static int HSYNC_MAXLEN = HMAX;
-static int VSYNC_MINLEN = VMIN;
+const static int HSYNC_TOLERANCEMIN = HTOLMIN;
+const static int HSYNC_TOLERANCEMAX = HTOLMAX;
+const static int VSYNC_TOLERANCEMIN = VTOLMIN;
+const static int VSYNC_TOLERANCEMAX = VTOLMAX;
+const static int HSYNC_MINLEN = HMIN;
+const static int HSYNC_MAXLEN = HMAX;
+const static int VSYNC_MINLEN = VMIN;
+
+const static int HSYNC_START = 16;
+const static int HSYNC_END = 32;
 
 int int_pending, nmi_pending, hsync_pending;
 int border, ink, paper;
@@ -80,7 +83,7 @@ int psync, sync_len;
 int setborder=0;
 int LastInstruction;
 int MemotechMode=0;
-BYTE shift_register, shift_reg_inv;
+BYTE shift_register;
 int rowcounter=0;
 int zx81_stop=0;
 int hsync_counter=0;
@@ -496,8 +499,7 @@ BYTE zx81_opcode_fetch_org(int Address)
 		// Finally load the bitmap we retrieved into the video shift
 		// register
 
-		shift_register = data;
-		shift_reg_inv = inv? 255:0;
+		shift_register = inv ? ~data: data;
 		return(0);
 	}
 	else
@@ -661,7 +663,7 @@ void checkhsync(int tolchk)
 	if ( ( !tolchk && sync_len >= HSYNC_MINLEN && sync_len <= HSYNC_MAXLEN && RasterX>=HSYNC_TOLERANCEMIN ) ||
 	     (  tolchk &&                                                         RasterX>=HSYNC_TOLERANCEMAX ) )
 	{
-		RasterX = 0;
+		RasterX = (hsync_counter - HSYNC_END) << 1;
 		RasterY++;
 		dest += TVP;
 	}
@@ -680,12 +682,13 @@ void checkvsync(int tolchk)
 	}
 }
 
-void checksync()
+void checksync(int inc)
 {
 	if (!SYNC_signal)
 	{
-		if (psync==1) sync_len = 0;
-		sync_len++;
+		if (psync==1)
+			sync_len = 0;
+		sync_len += inc;
 		checkhsync(1);
 		checkvsync(1);
 	} else
@@ -717,7 +720,6 @@ void anyout()
 int zx81_do_scanlines(int tstotal)
 {
     int ts;
-	int i, istate;
 	int tswait;
 
 	do
@@ -791,108 +793,78 @@ int zx81_do_scanlines(int tstotal)
 		}
 
 		/* do what happened during the last instruction */
+
+		/* Plot data in shift register */
 		if (SYNC_signal)
 		{
 			int k = TVP + dest + RasterX;
-			BYTE v = (shift_reg_inv)?~shift_register:shift_register;
 
-			if ((RasterX < ZX_VID_FULLWIDTH) &&
-				(k < ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT) && v)
+			if (shift_register &&
+			    (RasterX < ZX_VID_FULLWIDTH) &&
+				(k < ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT))
 			{
 				int kh = k >> 3;
 				int kl = k & 7;
 
 				if (kl)
 				{
-					scrnbmp_new[kh++]|=(v>>kl);
-					scrnbmp_new[kh]=(v<<(8-kl));
+					scrnbmp_new[kh++]|=(shift_register>>kl);
+					scrnbmp_new[kh]=(shift_register<<(8-kl));
 				}
 				else
 				{
-					scrnbmp_new[kh]=v;
+					scrnbmp_new[kh]=shift_register;
 				}
 			}
 		}
 		shift_register = 0;
-		shift_reg_inv = 0;
 
-#if 0
-		/* Can write 8 bits out, rest will be white
-		   1. Check if shift reg is non zero MAKE shift reg a byte rather than a word
-		   2. If so write whole byte (as cannot have less than 4 tstates)
-		   3. RasterX will be incremented elsewhere */
-		int saveRaster = RasterX;
-		for (istate=0; istate<ts; istate++)
-		{
-			int k, kh, kl;
-			unsigned char b, m;
+		const static int tstate_jump = 8; // Step up to 8 tstates at a time
+		int tstate_inc;
+		int states_remaining = ts;
+		int since_hstart = 0;
 
-			k = TVP + dest + RasterX;
-			kh = k >> 3;
-			kl = k & 7;
-			b = scrnbmp_new[kh];
-
-			/* draw two pixels for this tstate */
-			for (i=0; i<2; i++)
-			{
-				int colour, bit;
-
-				bit=((shift_register^shift_reg_inv)&128);
-
-				if (SYNC_signal)
-				{
-					colour = (bit ? ink:paper);
-					colour <<= 4;
-				} else
-				{
-					colour = border << 4;
-				    bit = 1; // set to 0 for no SYNC effects
-				}
-
-				colour += (bit ? 1 : 0); // hack for B/W & Chroma
-
-				shift_register<<=1;
-				shift_reg_inv<<=1;
-
-				RasterX++;
-
-				if ((RasterX < ZX_VID_FULLWIDTH) &&
-				    (k < ZX_VID_FULLWIDTH*ZX_VID_FULLHEIGHT))
-				{
-					m = 0x80 >> kl;
-					if (colour&0x01) b |= m; else b &= ~m;
-					kl++;
-				}
-			}
-			scrnbmp_new[kh] = b;
-		}
-		RasterX = saveRaster;
+#ifdef DEBUG
+		static int print_debug = 0;
+		static int dump_debug = 0;
+		static int clear_debug = 0;
+		tswait = 0;
 #endif
-		/* Should be able to do this for an entire instruction alternatively
-		   may want to iterate with larger step size (say 12?) */
-		for (istate=0; istate<ts; istate++)
+		do
 		{
-			hsync_counter++;
-			RasterX += 2;
+			tstate_inc = states_remaining > tstate_jump ? tstate_jump: states_remaining;
+			states_remaining -= tstate_inc;
+
+			hsync_counter+=tstate_inc;
+			RasterX += (tstate_inc<<1);
 
 			if (hsync_counter >= machine.tperscanline)
 			{
-				hsync_counter = 0;
+				hsync_counter -= machine.tperscanline;
 				if (zx81.machine!=MACHINEZX80) hsync_pending = 1;
 			}
 
 			// Start of HSYNC, and NMI if enabled
-			if (hsync_pending==1 && hsync_counter>=16)
+			if (hsync_pending==1 && hsync_counter>=HSYNC_START)
 			{
 				if (NMI_generator)
 				{
 					nmi_pending = 1;
-					if (ts==4) tswait = 14+istate; else tswait = 14;
+					if (ts==4)
+					{
+						tswait = 14 + (3-states_remaining - (hsync_counter - HSYNC_START));
+					}
+					else
+					{
+						tswait = 14;
+					}
+					states_remaining += tswait;
 					ts += tswait;
 					tstates += ts;
 				}
 
 				HSYNC_state = 1;
+				since_hstart = hsync_counter - HSYNC_START + 1;
 
 				if (VSYNC_state)
 				{
@@ -906,18 +878,43 @@ int zx81_do_scanlines(int tstotal)
 			}
 
 			// end of HSYNC
-			if (hsync_pending==2 && hsync_counter>=32)
+			if (hsync_pending==2 && hsync_counter>=HSYNC_END)
 			{
-				if (VSYNC_state==2) VSYNC_state = 0;
+				if (VSYNC_state==2)
+					VSYNC_state = 0;
 				HSYNC_state = 0;
 				hsync_pending = 0;
 			}
 
 			// NOR the vertical and horizontal SYNC states to create the SYNC signal
 			SYNC_signal = (VSYNC_state || HSYNC_state) ? 0 : 1;
-			checksync();
-		}
+			checksync(since_hstart ? since_hstart : tstate_jump);
+			since_hstart = 0;
+#ifdef DEBUG			
+			if (RasterY == 0)
+			{
+				if (dump_debug)
+				{
+					print_debug = 1;
+					dump_debug = 0;
+				}
+				else if (clear_debug ==1 )
+				{
+					clear_debug = 0;
+					print_debug = 0;
+				}
+			}
 
+			if (print_debug && RasterX ==0)
+			{
+				printf("Y = %i, ts = %i, remaining %i, wait %i, hscount %i\n", RasterY, ts, states_remaining, tswait, hsync_counter);
+				tswait = 0;
+				if (RasterY > 0)
+					clear_debug = 1;
+			}
+#endif			
+		}
+		while (states_remaining);
 		tstotal -= ts;
 
 		if (tstates >= tsmax)
