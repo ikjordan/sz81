@@ -282,6 +282,7 @@ int PatchTest(int pc)
 
 		switch (edbyte)
 		{
+#if 0
 			case 0xfa:
 				if (pc==0x0692 || pc==0x0693)
 				{
@@ -306,6 +307,7 @@ int PatchTest(int pc)
 					return(pc+2);
 				}
 			break;
+#endif
 			case 0xfc:
 				if (pc==0x348 && zx81.machine==MACHINEZX81)
 				{
@@ -315,19 +317,19 @@ int PatchTest(int pc)
 						sdl_load_file(z80.hl.w+offset,LOAD_FILE_METHOD_SELECTLOAD);
 					return(z80.pc.w);
 				}
-				if (zx81.machine==MACHINEZX80 && pc==0x206)
+				else if (pc==0x206 && zx81.machine==MACHINEZX80)
 				{
 					sdl_load_file(z80.hl.w+offset,LOAD_FILE_METHOD_SELECTLOAD);
 					return(pc+2);
 				}
 			break;
 			case 0xfd:
-				if (zx81.machine==MACHINEZX81 && pc==0x02fc)
+				if (pc==0x02fc && zx81.machine==MACHINEZX81)
 				{
 					sdl_save_file(z80.hl.w+offset,SAVE_FILE_METHOD_NAMEDSAVE);
 					return(pc+2);
 				}
-				if (zx81.machine==MACHINEZX80 && pc==0x01b6)
+				else if (pc==0x01b6 && zx81.machine==MACHINEZX80)
 				{
 					sdl_save_file(z80.hl.w+offset,SAVE_FILE_METHOD_UNNAMEDSAVE);
 					return(pc+2);
@@ -369,8 +371,10 @@ void zx81_writebyte(int Address, int Data)
 
 	if (Address>zx81.RAMTOP)
 	{
-		if (zx81.RAMTOP==0xbfff) Address &= 0x7fff;
-		else Address = (Address&(zx81.RAMTOP));
+		if (zx81.RAMTOP==0xbfff)
+			Address &= 0x7fff;
+		else
+			Address = (Address&(zx81.RAMTOP));
 	}
 
 	if (Address>8191 && Address<16384 && zx81.shadowROM && zx81.protectROM) return;
@@ -383,9 +387,12 @@ BYTE zx81_readbyte(int Address)
 {
 	int data;
 
-	if (Address<=zx81.RAMTOP) data=memory[Address];
-	else if (zx81.RAMTOP==0xbfff) data=memory[Address&0x7fff];
-	else data=memory[Address&zx81.RAMTOP];
+	if (Address<=zx81.RAMTOP)
+		data=memory[Address];
+	else if (zx81.RAMTOP==0xbfff)
+		data=memory[Address&0x7fff];
+	else
+		data=memory[Address&zx81.RAMTOP];
 
 	return(data);
 }
