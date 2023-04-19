@@ -22,8 +22,6 @@
 #define LASTINSTOUTFD 3
 #define LASTINSTOUTFF 4
 
-//#define DEBUG_PRINT
-
 // #define VRCNTR
 
 ZX81 zx81;
@@ -72,6 +70,7 @@ BYTE font[512];
 int borrow=0;
 
 unsigned long tstates=0;
+unsigned long tsave=0;
 unsigned long tsmax=0;
 unsigned long frames=0;
 
@@ -92,6 +91,10 @@ int ispeedup;
 int ffetch;
 
 extern void loadrombank(int offset);
+static inline void checksync(int inc);
+
+static inline void checkhsync(int tolchk);
+static inline void checkvsync(int tolchk);
 
 /* in common.c */
 void aszmic4hacks();
@@ -524,15 +527,17 @@ BYTE zx81_opcode_fetch_org(int Address)
 
 BYTE zx81_opcode_fetch(int Address)
 {
-	BYTE opcode;
-
-	opcode = zx81_opcode_fetch_org(Address);
+#if 1
+	return zx81_opcode_fetch_org(Address);
+#else
+	BYTE opcode = zx81_opcode_fetch_org(Address)
 
 	if (Address>=sdl_emulator.bdis && Address<=sdl_emulator.edis && ffetch)
 		disassemble(Address, opcode);
 	ffetch = 0;
 
 	return opcode;
+#endif
 }
 
 
@@ -558,10 +563,6 @@ void zx81_writeport(int Address, int Data, int *tstates)
         case 0xcf:
         case 0xdf:
 			if (zx81.aytype==AY_TYPE_ZONX) SelectAYReg=Data&15;
-		break;
-
-        case 0xdd:
-			if (zx81.aytype==AY_TYPE_ACE) SelectAYReg=Data;
 		break;
 
         case 0xfb:
@@ -669,18 +670,19 @@ BYTE zx81_readport(int Address, int *tstates)
 }
 
 /* Normally, these sync checks are done by the TV :-) */
-void checkhsync(int tolchk)
+static inline void checkhsync(int tolchk)
 {
 	if ( ( !tolchk && sync_len >= HSYNC_MINLEN && sync_len <= HSYNC_MAXLEN && RasterX>=HSYNC_TOLERANCEMIN ) ||
 	     (  tolchk &&                                                         RasterX>=HSYNC_TOLERANCEMAX ) )
 	{
-		RasterX = (hsync_counter - HSYNC_END) << 1;
+		//RasterX = (hsync_counter - HSYNC_END) << 1;
+		RasterX = 0;
 		RasterY++;
 		dest += TVP;
 	}
 }
 
-void checkvsync(int tolchk)
+static inline void checkvsync(int tolchk)
 {
 	if ( ( !tolchk && sync_len >= VSYNC_MINLEN && RasterY>=VSYNC_TOLERANCEMIN ) ||
 	     (  tolchk &&                             RasterY>=VSYNC_TOLERANCEMAX ) )
@@ -702,7 +704,7 @@ void checkvsync(int tolchk)
 	}
 }
 
-void checksync(int inc)
+static inline void checksync(int inc)
 {
 	if (!SYNC_signal)
 	{
@@ -727,11 +729,16 @@ void checksync(int inc)
 
 void anyout()
 {
-	if (VSYNC_state) {
+	if (VSYNC_state)
+	{
 		if (zx81.machine==MACHINEZX80)
+		{
 			VSYNC_state = 2; // will be reset by HSYNC circuitry
+		}
 		else
+		{
 			VSYNC_state = 0;
+		}
 		if (zx81.vsyncsound) sound_beeper(0);
 		vsync_lower();
 	}
@@ -757,13 +764,13 @@ int zx81_do_scanlines(int tstotal)
 			hsync_counter = -2;             /* INT ACK after two tstates */
 			hsync_pending = 1;              /* a HSYNC may be started */
 		}
-
-		if (nmi_pending)
+		else if (nmi_pending)
 		{
 			ts = z80_nmi(0);
 		}
 
 		LastInstruction = LASTINSTNONE;
+
 		if (!nmi_pending && !int_pending)
 		{
 			ffetch = 1;
@@ -771,7 +778,6 @@ int zx81_do_scanlines(int tstotal)
 			ts = z80_do_opcode();
 		}
 		nmi_pending = int_pending = 0;
-
 		tstates += ts;
 
 		/* check iff1 even though it is checked in z80_interrupt() */
@@ -840,17 +846,11 @@ int zx81_do_scanlines(int tstotal)
 		}
 		shift_register = 0;
 
-		const static int tstate_jump = 8; // Step up to 8 tstates at a time
+		int tstate_jump = ((hsync_counter > HSYNC_END) && ((hsync_counter + ts) < (machine.tperscanline + HSYNC_START))) ? 8: 1;
 		int tstate_inc;
 		int states_remaining = ts;
 		int since_hstart = 0;
 
-#ifdef DEBUG_PRINT
-		static int print_debug = 0;
-		static int dump_debug = 0;
-		static int clear_debug = 0;
-		tswait = 0;
-#endif
 		do
 		{
 			tstate_inc = states_remaining > tstate_jump ? tstate_jump: states_remaining;
@@ -881,7 +881,7 @@ int zx81_do_scanlines(int tstotal)
 					}
 					states_remaining += tswait;
 					ts += tswait;
-					tstates += ts;
+					tstates += tswait;
 				}
 
 				HSYNC_state = 1;
@@ -911,30 +911,6 @@ int zx81_do_scanlines(int tstotal)
 			SYNC_signal = (VSYNC_state || HSYNC_state) ? 0 : 1;
 			checksync(since_hstart ? since_hstart : tstate_jump);
 			since_hstart = 0;
-#ifdef DEBUG_PRINT
-			if (RasterY == 0)
-			{
-				if (dump_debug)
-				{
-					print_debug = 1;
-					dump_debug = 0;
-				}
-				else if (clear_debug ==1 )
-				{
-					clear_debug = 0;
-					print_debug = 0;
-				}
-			}
-
-			if (print_debug && RasterX ==0)
-			{
-				printf("Y = %i, ts = %i, remaining %i, wait %i, hscount %i, sync %c\n",
-				       RasterY, ts, states_remaining, tswait, hsync_counter, SYNC_signal ? 'Y' : 'N');
-				tswait = 0;
-				if (RasterY > 0)
-					clear_debug = 1;
-			}
-#endif			
 		}
 		while (states_remaining);
 		tstotal -= ts;
@@ -1018,7 +994,8 @@ void zx81_initialise(void)
 /* Initialise Accurate Drawing */
 
 	RasterX = 0;
-	RasterY = myrandom(VSYNC_TOLERANCEMAX);
+	//RasterY = myrandom(VSYNC_TOLERANCEMAX);
+	RasterY = 0;
 	dest = 0;
 	psync = 1;
 	sync_len = 0;
