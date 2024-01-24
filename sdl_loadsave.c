@@ -55,6 +55,9 @@ void fread_unsigned_short_little_endian(unsigned short *target, FILE *fp);
 void fread_int_little_endian(int *target, FILE *fp);
 void fread_unsigned_long_little_endian(unsigned long *target, FILE *fp);
 
+#ifdef PLATFORM_RISCOS
+extern char riscos_prog_dir[];
+#endif
 
 /***************************************************************************
  * Load File Dialog Directory List Populate                                *
@@ -107,6 +110,10 @@ int save_state_dialog_slots_populate(void) {
 	/* Build a path to the currently loaded program's save state folder */
 	#if defined(PLATFORM_GP2X) || defined(__amigaos4__) || defined(_WIN32)
 		strcpy(foldername, LOCAL_DATA_DIR);
+	#elif defined(PLATFORM_RISCOS)
+		strcpy(foldername, riscos_prog_dir);
+		strcatdelimiter(foldername);
+		strcat(foldername, LOCAL_DATA_DIR);
 	#else
 		strcpy(foldername, getenv ("HOME"));
 		strcatdelimiter(foldername);
@@ -290,6 +297,10 @@ int sdl_save_file(int parameter, int method) {
 		/* Build a path to the currently loaded program's save state folder */
 		#if defined(PLATFORM_GP2X) || defined(__amigaos4__) || defined(_WIN32)
 			strcpy(fullpath, LOCAL_DATA_DIR);
+		#elif defined(PLATFORM_RISCOS)
+			strcpy(fullpath, riscos_prog_dir);
+			strcatdelimiter(fullpath);
+			strcat(fullpath, LOCAL_DATA_DIR);
 		#else
 			strcpy(fullpath, getenv ("HOME"));
 			strcatdelimiter(fullpath);
@@ -514,6 +525,10 @@ int sdl_load_file(int parameter, int method) {
 		/* Build a path to the currently loaded program's save state folder */
 		#if defined(PLATFORM_GP2X) || defined(__amigaos4__) || defined(_WIN32)
 			strcpy(fullpath, LOCAL_DATA_DIR);
+		#elif defined(PLATFORM_RISCOS)
+			strcpy(fullpath, riscos_prog_dir);
+			strcatdelimiter(fullpath);
+			strcat(fullpath, LOCAL_DATA_DIR);
 		#else
 			strcpy(fullpath, getenv ("HOME"));
 			strcatdelimiter(fullpath);
