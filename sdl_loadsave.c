@@ -759,7 +759,22 @@ int sdl_load_file(int parameter, int method) {
 							else
 								fread(mem + addr + zxmoffset, 1, ramsize * 1024, fp);
 #else
-							fread(mem + addr, 1, ramsize * 1024, fp);
+							// Protect low memory
+							if ((addr < 8192) && zx81.protectROM) {
+								int offset = 8192 - addr;
+
+								// Get size of file
+								fseek(fp, 0, SEEK_END);  // seek to end of file
+								long size = ftell(fp);   // get current file pointer
+
+								if (size > offset) {
+									fseek(fp, offset, SEEK_SET);
+									fread(mem + 8192, 1, size - offset, fp);
+								}
+							}
+							else {
+								fread(mem + addr, 1, ramsize * 1024, fp);
+							}
 #endif
 						} else {
 							fread(mem + 0x4009 + zxmoffset, 1, ramsize * 1024 - 9, fp);
