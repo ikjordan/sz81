@@ -765,8 +765,9 @@ void emulator_exit(void) {
  ***************************************************************************/
 
 void clean_up_before_exit(void) {
+#ifndef PLATFORM_RISCOS
 	int count;
-
+#endif
 	if (load_file_dialog.dirlist) free(load_file_dialog.dirlist);
 
 	#ifdef OSS_SOUND_SUPPORT
@@ -777,6 +778,7 @@ void clean_up_before_exit(void) {
 
 	if (rcfile.rewrite) rcfile_write();
 
+#ifndef PLATFORM_RISCOS
 	if (control_bar.scaled) SDL_FreeSurface(control_bar.scaled);
 	if (vkeyb.zx80original) SDL_FreeSurface(vkeyb.zx80original);
 	if (vkeyb.zx81original) SDL_FreeSurface(vkeyb.zx81original);
@@ -806,7 +808,7 @@ void clean_up_before_exit(void) {
 	exitmem();
 
 	SDL_Quit();
-
+#endif
 	#ifdef __amigaos4__
 		amiga_close_libs();
 	#endif

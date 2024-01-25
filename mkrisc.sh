@@ -39,4 +39,17 @@ cd cpp
 for v in *.cpp ; do mv "$v"  "$(basename "$v" .cpp)"; done
 cd ../h
 for v in *.h ; do mv "$v"  "$(basename "$v" .h)"; done
-cd ..
+cd ../..
+mkdir -p z80
+cd z80
+mkdir -p c
+mkdir -p h
+rm -f c/*
+rm -f h/*
+cp ../../z80/*.c c
+cp ../../z80/*.h h
+cd c
+for v in *.c ; do mv "$v"  "$(basename "$v" .c)"; done
+cd ../h
+for v in *.h ; do mv "$v"  "$(basename "$v" .h)"; done
+

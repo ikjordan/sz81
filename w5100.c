@@ -36,7 +36,7 @@
 
 #endif
 
-#if defined(Win32) || defined(SIOCGIFHWADDR)
+#if (defined(Win32) || defined(SIOCGIFHWADDR) ) && (!defined(PLATFORM_RISCOS))
 
 //#define W_DEBUG
 

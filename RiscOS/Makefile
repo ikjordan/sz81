@@ -1,15 +1,11 @@
-# Comment/uncomment these to choose an installation destination
-# System wide installation
-#PREFIX?=/usr/local
-#BINDIR?=$(PREFIX)/bin
-#DOCDIR?=$(PREFIX)/share/doc/$(TARGET)
-#PACKAGE_DATA_DIR?=$(PREFIX)/share/$(TARGET)
+# May need to increase cc heap
+# *SetEval cc1$HeapMax 128
 
-# Local installation within your home folder
-#PREFIX?=$(HOME)/Games/$(TARGET)
-#BINDIR?=$(PREFIX)
-#DOCDIR?=$(PREFIX)/doc
-#PACKAGE_DATA_DIR?=$(PREFIX)/data
+# To convert to correct format use
+# *elf2aif sz81
+
+# SDL libs and includes assumed to be in SDL under install dir
+# Run from current folder i.e. no installation
 
 # Run from current folder i.e. no installation
 PREFIX?=.
@@ -26,10 +22,10 @@ SOUNDDEF=-DOSS_SOUND_SUPPORT
 TARGET=sz81
 SOURCES=sdl_main.c common.c sound.c zx81config.c sdl_engine.c sdl_hotspots.c \
 	sdl_input.c sdl_loadsave.c sdl_resources.c sdl_sound.c sdl_video.c \
-	z80/z80.c z80/z80_ops.c zx81.c dissz80.c tables.c noscript.c
+	z80/z80.c z80/z80_ops.c zx81.c dissz80.c tables.c noscript.c w5100stub.c
 OBJECT1=zx81config.o sdl_hotspots.o sdl_input.o sdl_loadsave.o sdl_resources.o
 OBJECT3=z80/z80.o z80/z80_ops.o zx81.o dissz80.o tables.o noscript.o \
-        sdl_sound.o sdl_video.o sdl_main.o common.o sound.o sdl_engine.o
+        sdl_sound.o sdl_video.o sdl_main.o common.o sound.o sdl_engine.o w5100stub.o
 
 OBJECTS=$(OBJECT1) $(OBJECT3)
 
@@ -42,7 +38,7 @@ VERSION=2_3_12
 #SDL_CONFIG?=sdl-config
 #CFLAGS?=-O1
 CFLAGS+=-Wall -Wno-unused-result -ISDL -DVERSION=\"$(VERSION)\" -DENABLE_EMULATION_SPEED_ADJUST \
-	-DPACKAGE_DATA_DIR=\"$(PACKAGE_DATA_DIR)\" $(SOUNDDEF) -DSZ81 -D_DZ80_EXCLUDE_SCRIPT
+	-DPACKAGE_DATA_DIR=\"$(PACKAGE_DATA_DIR)\" $(SOUNDDEF) -DSZ81 -D_DZ80_EXCLUDE_SCRIPT -DPLATFORM_RISCOS 
 # options:
 # -DAPU
 # -DZXPAND
@@ -95,27 +91,5 @@ clean:
 	cd sndrender && $(MAKE) clean
 	cd zxpand && $(MAKE) clean
 	rm -f *.o *~ sz81 z80/*.o z80/*~ am9511/am9511.o stzxfs
-
-install:
-	@if [ "$(PREFIX)" = . ] ; then \
-		echo "Installing into the current folder is not allowed."; \
-		exit 2; \
-	fi
-	mkdir -p $(BINDIR)
-	mkdir -p $(DOCDIR)
-	mkdir -p $(PACKAGE_DATA_DIR)
-	cp $(TARGET) $(BINDIR)
-	cp AUTHORS COPYING ChangeLog NEWS README $(DOCDIR)
-	cp data/*.bmp $(PACKAGE_DATA_DIR)
-	@if [ -f data/zx80.rom ]; then cp data/zx80.rom $(PACKAGE_DATA_DIR); fi
-	@if [ -f data/zx81.rom ]; then cp data/zx81.rom $(PACKAGE_DATA_DIR); fi
-	@if [ -f data/aszmic.rom ]; then cp data/aszmic.rom $(PACKAGE_DATA_DIR); fi
-	@if [ -f data/h4th.rom ]; then cp data/h4th.rom $(PACKAGE_DATA_DIR); fi
-	@if [ -f data/zx81font.rom ]; then cp data/zx81font.rom $(PACKAGE_DATA_DIR); fi
-	@if [ -f data/zx81.zxpand.ovl ]; then cp data/zx81.zxpand.ovl $(PACKAGE_DATA_DIR); fi
-	@if [ -f data/zxnu.rom ]; then cp data/zxnu.rom $(PACKAGE_DATA_DIR); fi
-
-uninstall:
-	@echo "Uninstalling is not currently implemented."
 
 
