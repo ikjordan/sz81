@@ -1,7 +1,7 @@
-# May need to increase cc heap
+# To compile z80 emulator will need to increase cc heap
 # *SetEval cc1$HeapMax 128
 
-# To convert to correct format use
+# To convert binary to aif format use
 # *elf2aif sz81
 
 # SDL libs and includes assumed to be in SDL under install dir
@@ -18,25 +18,19 @@ PACKAGE_DATA_DIR?=$(PREFIX)/data
 SOUNDDEF=-DOSS_SOUND_SUPPORT
 
 # You won't need to alter these
-# Removed w5100.c
 TARGET=sz81
 SOURCES=sdl_main.c common.c sound.c zx81config.c sdl_engine.c sdl_hotspots.c \
 	sdl_input.c sdl_loadsave.c sdl_resources.c sdl_sound.c sdl_video.c \
 	z80/z80.c z80/z80_ops.c zx81.c dissz80.c tables.c noscript.c w5100stub.c
 OBJECT1=zx81config.o sdl_hotspots.o sdl_input.o sdl_loadsave.o sdl_resources.o
 OBJECT3=z80/z80.o z80/z80_ops.o zx81.o dissz80.o tables.o noscript.o \
-        sdl_sound.o sdl_video.o sdl_main.o common.o sound.o sdl_engine.o w5100stub.o
+        sdl_sound.o sdl_video.o sdl_main.o common.o sound.o sdl_engine.o w5100.o
 
 OBJECTS=$(OBJECT1) $(OBJECT3)
 
 VERSION=2_3_12
 
 # These should be ok for most.
-# For debugging/profiling uncomment the following two lines:
-#CFLAGS=-O0 - -pg
-#LDFLAGS=-pg
-#SDL_CONFIG?=sdl-config
-#CFLAGS?=-O1
 CFLAGS+=-Wall -Wno-unused-result -ISDL -DVERSION=\"$(VERSION)\" -DENABLE_EMULATION_SPEED_ADJUST \
 	-DPACKAGE_DATA_DIR=\"$(PACKAGE_DATA_DIR)\" $(SOUNDDEF) -DSZ81 -D_DZ80_EXCLUDE_SCRIPT -DPLATFORM_RISCOS 
 # options:
@@ -49,7 +43,6 @@ CFLAGS+=-Wall -Wno-unused-result -ISDL -DVERSION=\"$(VERSION)\" -DENABLE_EMULATI
 
 LINK=$(CC)
 #LDFLAGS=
-#LIBS=`$(SDL_CONFIG) --libs` -lrt -Lsndrender -lsndrender -Lzxpand -lzxpand
 LIBS= -LSDL -lSDL -Lsndrender -lsndrender -Lzxpand -lzxpand
 
 # You won't need to alter anything below
@@ -66,8 +59,9 @@ $(OBJECT3): CGFLAGS = $(CFLAGS) -O3
 $(OBJECTS): %.o: %.c
 	gcc -static $(CGFLAGS) -c $< -o $@
 
+# Workaround for Risc OS. Manually execute the Makefiles in the zxpand and sndrender directories first
 #sndrender/libsndrender.a: sndrender/sndbuffer.cpp sndrender/sndchip.cpp sndrender/sndcounter.cpp sndrender/sndrender.cpp sndrender/sndinterface.cpp
-#	Dir sndrender && $(MAKE)
+#	cd sndrender && $(MAKE)
 
 #zxpand/libzxpand.a: zxpand/zxpand_emu.cpp zxpand/zxpandclass.cpp zxpand/smbsd.cpp zxpand/zxpandcom.cpp zxpand/usart.cpp zxpand/zxpandcore.cpp zxpand/js.cpp zxpand/wildcard.cpp zxpand/ff.cpp
 #	cd zxpand && CXXFLAGS='$(CFLAGS) -Wno-trigraphs' $(MAKE)
