@@ -721,11 +721,25 @@ void check_events(void) {
 	extern "C"
 #endif
 
+#ifdef PLATFORM_RISCOS
+char riscos_prog_dir[256];
+#endif
+
 int main(int argc, char *argv[]) {
 	int retval = 0;
 
 	#ifdef __amigaos4__
 		amiga_open_libs();
+	#endif
+
+	#ifdef PLATFORM_RISCOS
+	if (argc)
+	{
+		strcpy(riscos_prog_dir, argv[0]);
+		char* p = strrchr(riscos_prog_dir,'/');
+		if (p) *(p)=0;
+		chdir(riscos_prog_dir);
+	}
 	#endif
 
 	/* Initialise sz81 variables, SDL, WM icon, local data dir */

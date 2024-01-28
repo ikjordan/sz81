@@ -56,7 +56,7 @@ void clean_up_before_exit(void);
 
 int sdl_init(void) {
 	int count;
-	#if defined(PLATFORM_GP2X)
+	#if defined(PLATFORM_GP2X) || defined(PLATFORM_RISCOS)
 	#elif defined(PLATFORM_ZAURUS)
 	#else
 		char filename[256];
@@ -107,6 +107,8 @@ int sdl_init(void) {
 	sdl_emulator.invert = 0;		/* Off is the default */
 	#if defined(PLATFORM_GP2X)
 		sdl_sound.volume = 30;
+	#elif defined(PLATFORM_RISCOS)
+		sdl_sound.volume = 20;
 	#else
 		sdl_sound.volume = 64;
 	#endif
@@ -198,6 +200,7 @@ int sdl_init(void) {
 	#if defined(PLATFORM_GP2X)
 	#elif defined(PLATFORM_ZAURUS)
 	#else
+    #ifndef PLATFORM_RISCOS
 		strcpy(filename, PACKAGE_DATA_DIR);
 		strcatdelimiter(filename);
 		strcat(filename, IMG_WM_ICON);
@@ -209,9 +212,9 @@ int sdl_init(void) {
 		} else {
 			SDL_WM_SetIcon (wm_icon, NULL);
 		}
-
+	#endif
 		/* Set display window title */
-		SDL_WM_SetCaption("sz81", "sz81");
+		SDL_WM_SetCaption("sz81 "VERSION, "sz81");
 	#endif
 
 	/* Set-up the local data directory */
@@ -761,8 +764,9 @@ void emulator_exit(void) {
  ***************************************************************************/
 
 void clean_up_before_exit(void) {
+#ifndef PLATFORM_RISCOS
 	int count;
-
+#endif
 	if (load_file_dialog.dirlist) free(load_file_dialog.dirlist);
 
 	#ifdef OSS_SOUND_SUPPORT
@@ -773,6 +777,7 @@ void clean_up_before_exit(void) {
 
 	if (rcfile.rewrite) rcfile_write();
 
+#ifndef PLATFORM_RISCOS
 	if (control_bar.scaled) SDL_FreeSurface(control_bar.scaled);
 	if (vkeyb.zx80original) SDL_FreeSurface(vkeyb.zx80original);
 	if (vkeyb.zx81original) SDL_FreeSurface(vkeyb.zx81original);
@@ -802,7 +807,7 @@ void clean_up_before_exit(void) {
 	exitmem();
 
 	SDL_Quit();
-
+#endif
 	#ifdef __amigaos4__
 		amiga_close_libs();
 	#endif

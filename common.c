@@ -786,7 +786,7 @@ if(zx81.machine==MACHINELAMBDA)
 
 /* initialise shared memory */
 
-#ifndef Win32
+#if (!defined(Win32)) && (!defined(PLATFORM_OS))
  if (rwsz81mem==1) {
 	 fdsz81mem = shm_open("/sz81mem", O_RDONLY, S_IRUSR | S_IWUSR);
 	 if (fdsz81mem < 0) {
@@ -813,7 +813,7 @@ if(zx81.machine==MACHINELAMBDA)
 
 void exitmem()
 {
-#ifndef Win32
+#if (!defined(Win32)) && (!defined(PLATFORM_RISCOS))
 	if (rwsz81mem) {
 		if (munmap(sz81mem, SHMSIZ) < 0) perror("munmap");
 		if (close(fdsz81mem < 0)) perror("close");
